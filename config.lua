@@ -1,5 +1,3 @@
-fiber = require 'fiber'
-
 box.cfg{
     listen = 3013,
     wal_dir='xlog',
@@ -59,10 +57,4 @@ end
 
 box.space.test:truncate()
 
-if not fiber.self().storage.console then
-    require'console'.start()
-    os.exit()
-end
-
---box.schema.user.revoke('guest', 'read,write,execute', 'universe')
-
+require'console'.start()

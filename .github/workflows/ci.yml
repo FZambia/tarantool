@@ -19,7 +19,7 @@ jobs:
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     strategy:
       matrix:
-        go-version: [1.14, 1.15]
+        go-version: [1.15]
         tarantool-version: [2.7.0, 2.5.2, 1.10.8]
     steps:
       - name: Install Go stable version
@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Start Tarantool
-        run: mkdir xlog && mkdir snap && docker run -d -p 3301:3301 -p 3302:3302 -p 3303:3303 -p 3013:3013 -v `pwd`:/opt/tarantool tarantool/tarantool:${{ matrix.tarantool-version }} tarantool config.lua
+        run: mkdir xlog && mkdir snap && docker run -d -p 3013:3013 -v `pwd`:/opt/tarantool tarantool/tarantool:${{ matrix.tarantool-version }} tarantool config.lua
 
       - name: Test
         run: go test -v -race
