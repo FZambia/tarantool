@@ -1,0 +1,37 @@
+name: build
+on: [push, pull_request]
+jobs:
+  golangci:
+    name: Lint
+    runs-on: ubuntu-latest
+    # Prevent duplicate builds on internal PRs.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.29
+  build:
+    name: Test with Go ${{ matrix.go-version }}
+    runs-on: ubuntu-latest
+    # Prevent duplicate builds on internal PRs.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    strategy:
+      matrix:
+        go-version: [1.14, 1.15]
+        tarantool-version: [2.7, 2.5, 1.10]
+    steps:
+      - name: Install Go stable version
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Start Tarantool
+        run: mkdir xlog && mkdir snap && docker run -d -p 3301:3301 -p 3302:3302 -p 3303:3303 -p 3013:3013 -v `pwd`:/opt/tarantool tarantool/tarantool:${{ matrix.tarantool-version }} tarantool config.lua
+
+      - name: Test
+        run: go test -v -race
