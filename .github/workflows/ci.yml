@@ -13,14 +13,14 @@ jobs:
         with:
           version: v1.29
   build:
-    name: Test with Go ${{ matrix.go-version }}
+    name: Test Go ${{ matrix.go-version }} / Tarantool ${{ matrix.tarantool-version }}
     runs-on: ubuntu-latest
     # Prevent duplicate builds on internal PRs.
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     strategy:
       matrix:
         go-version: [1.14, 1.15]
-        tarantool-version: [2.7, 2.5, 1.10]
+        tarantool-version: [2.7.0, 2.5.2, 1.10.8]
     steps:
       - name: Install Go stable version
         uses: actions/setup-go@v2
