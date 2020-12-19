@@ -30,6 +30,6 @@ $ go get github.com/FZambia/tarantool
 
 ## Status
 
-This library is a prototype for Centrifuge/Centrifugo ongoing Tarantool Engine experiment.
+This library is a prototype for [Centrifuge](https://github.com/centrifugal/centrifuge)/[Centrifugo](https://github.com/centrifugal/centrifugo) ongoing Tarantool Engine experiment.
 
 **API is not stable here** and can have changes as experiment evolves. Also, there are no concrete plans at the moment regarding the package maintenance.
