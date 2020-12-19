@@ -1,5 +1,5 @@
 box.cfg{
-    listen = 3013,
+    listen = '0.0.0.0:'..3013,
     wal_dir='xlog',
     snap_dir='snap',
 }
@@ -57,4 +57,4 @@ end
 
 box.space.test:truncate()
 
-require'console'.start()
+require 'console'.start()
