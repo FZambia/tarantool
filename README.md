@@ -12,7 +12,7 @@ Differences from the original package:
 * API changed, some non-obvious (mostly to me personally) API removed.
 * This package uses the latest msgpack library [github.com/vmihailenco/msgpack/v5](https://github.com/vmihailenco/msgpack) instead of `v2` in original.
 * Uses `enc.UseArrayEncodedStructs(true)` for `msgpack.Encoder` internally so there is no need to define `msgpack:",as_array"` struct tags.
-* Supports out-of-bound pushes (see [box.session.push](https://www.tarantool.io/ru/doc/2.5/reference/reference_lua/box_session/#box-session-push))
+* Supports out-of-bound pushes (see [box.session.push](https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_session/#box-session-push))
 * Adds optional support for `context.Context` (though performance will suffer a bit, if you want a maximum performance then use non-context methods which use per-connection timeout).
 * Uses sync.Pool for `*msgpack.Decoder` to reduce allocations on decoding stage a bit. Actually this package allocates a bit more than the original one, but allocations are small and overall performance is comparable to the original (based on observations from internal benchmarks). 
 * No `multi` and `queue` packages.
