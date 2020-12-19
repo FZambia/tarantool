@@ -56,5 +56,3 @@ function simple_incr(a)
 end
 
 box.space.test:truncate()
-
-require 'console'.start()
