@@ -82,7 +82,7 @@ func (c *Tuple2) DecodeMsgpack(d *msgpack.Decoder) error {
 	return nil
 }
 
-var server = "127.0.0.1:3013"
+var server = "127.0.0.1:3301"
 var spaceNo = uint32(512)
 var spaceName = "test"
 var indexNo = uint32(0)

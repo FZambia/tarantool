@@ -1,8 +1,4 @@
-box.cfg{
-    listen = '0.0.0.0:'..3013,
-    wal_dir='xlog',
-    snap_dir='snap',
-}
+box.cfg{}
 
 box.once("init", function()
 local s = box.schema.space.create('test', {
