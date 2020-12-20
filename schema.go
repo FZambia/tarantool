@@ -8,14 +8,13 @@ import (
 
 // Schema contains information about spaces and indexes.
 type Schema struct {
-	Version uint
-	// Spaces is map from space names to spaces
+	// Spaces is map from space names to spaces.
 	Spaces map[string]*Space
-	// SpacesByID is map from space numbers to spaces
+	// SpacesByID is map from space numbers to spaces.
 	SpacesByID map[uint32]*Space
 }
 
-// Space contains information about tarantool space
+// Space contains information about tarantool space.
 type Space struct {
 	ID        uint32
 	Name      string
@@ -27,9 +26,9 @@ type Space struct {
 	Fields      map[string]*Field
 	FieldsByID  map[uint32]*Field
 
-	// Indexes is map from index names to indexes
+	// Indexes is map from index names to indexes.
 	Indexes map[string]*Index
-	// IndexesByID is map from index numbers to indexes
+	// IndexesByID is map from index numbers to indexes.
 	IndexesByID map[uint32]*Index
 }
 
@@ -39,7 +38,7 @@ type Field struct {
 	Type string
 }
 
-// Index contains information about index
+// Index contains information about index.
 type Index struct {
 	ID     uint32
 	Name   string
@@ -172,9 +171,9 @@ func (conn *Connection) loadSchema() (err error) {
 		default:
 			panic("unexpected schema format (index fields)")
 		}
-		spaceId := uint32(row[0].(uint64))
-		schema.SpacesByID[spaceId].IndexesByID[index.ID] = index
-		schema.SpacesByID[spaceId].Indexes[index.Name] = index
+		spaceID := uint32(row[0].(uint64))
+		schema.SpacesByID[spaceID].IndexesByID[index.ID] = index
+		schema.SpacesByID[spaceID].Indexes[index.Name] = index
 	}
 	conn.schema = schema
 	return nil
