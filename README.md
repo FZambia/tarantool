@@ -35,3 +35,64 @@ $ go get github.com/FZambia/tarantool
 This library is a prototype for [Centrifuge](https://github.com/centrifugal/centrifuge)/[Centrifugo](https://github.com/centrifugal/centrifugo) ongoing Tarantool Engine experiment.
 
 **API is not stable here** and can have changes as experiment evolves. Also, there are no concrete plans at the moment regarding the package maintenance.
+
+The versioning politics before v1 will be the following: patch version updates will only contain backwards compatible changes, minor version updates may have backwards incompatible changes.
+
+## Quick start
+
+Create `example.lua` file with content:
+
+```lua
+box.cfg{listen = 3301}
+box.schema.space.create('examples', {id = 999})
+box.space.examples:create_index('primary', {type = 'hash', parts = {1, 'unsigned'}})
+box.schema.user.grant('guest', 'read,write', 'space', 'examples')
+```
+
+Run it with Tarantool:
+
+```
+tarantool example.lua
+```
+
+Then create `main.go` file:
+
+```go
+package main
+
+import (
+	"log"
+	"time"
+
+	"github.com/FZambia/tarantool"
+)
+
+type Row struct {
+	ID    uint64
+	Value string
+}
+
+func main() {
+	opts := tarantool.Opts{
+		RequestTimeout: 500 * time.Millisecond,
+		User:           "guest",
+	}
+	conn, err := tarantool.Connect("127.0.0.1:3301", opts)
+	if err != nil {
+		log.Fatalf("Connection refused: %v", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	_, err = conn.Exec(tarantool.Insert("examples", Row{ID: 999, Value: "hello"}))
+	if err != nil {
+		log.Fatalf("Insert failed: %v", err)
+	}
+	log.Println("Insert succeeded")
+}
+```
+
+Finally, run it with:
+
+```
+go run main.go
+```
