@@ -19,6 +19,7 @@ Differences from the original package:
 * Only one version of `Call` which uses Tarantool 1.7 request code.
 * Modified connection address behavior: refer to `Connect` function docs to see details.
 * Per-request timeout detached from underlying connection read and write timeouts.
+* `Op` type to express different update/upsert operations.
 
 The networking core of `github.com/tarantool/go-tarantool` kept mostly unchanged at the moment so this package should behave in similar way.
 

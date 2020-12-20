@@ -52,35 +52,3 @@ func (k IntIntKey) EncodeMsgpack(enc *msgpack.Encoder) error {
 	_ = enc.EncodeInt(int64(k.I2))
 	return nil
 }
-
-// Op - is update operation.
-type Op struct {
-	Op    string
-	Field int
-	Arg   interface{}
-}
-
-func (o Op) EncodeMsgpack(enc *msgpack.Encoder) error {
-	_ = enc.EncodeArrayLen(3)
-	_ = enc.EncodeString(o.Op)
-	_ = enc.EncodeInt(int64(o.Field))
-	return enc.Encode(o.Arg)
-}
-
-type OpSplice struct {
-	Op      string
-	Field   int
-	Pos     int
-	Len     int
-	Replace string
-}
-
-func (o OpSplice) EncodeMsgpack(enc *msgpack.Encoder) error {
-	_ = enc.EncodeArrayLen(5)
-	_ = enc.EncodeString(o.Op)
-	_ = enc.EncodeInt(int64(o.Field))
-	_ = enc.EncodeInt(int64(o.Pos))
-	_ = enc.EncodeInt(int64(o.Len))
-	_ = enc.EncodeString(o.Replace)
-	return nil
-}

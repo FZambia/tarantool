@@ -127,7 +127,7 @@ func Delete(space, index interface{}, key interface{}) *Request {
 
 // Update sends deletion of a tuple by key.
 // Result will contain array with updated tuple.
-func Update(space, index interface{}, key, ops interface{}) *Request {
+func Update(space, index interface{}, key interface{}, ops []Op) *Request {
 	return newRequest(UpdateRequest, func(conn *Connection) (func(enc *msgpack.Encoder) error, error) {
 		spaceNo, indexNo, err := conn.schema.resolveSpaceIndex(space, index)
 		if err != nil {
@@ -146,7 +146,7 @@ func Update(space, index interface{}, key, ops interface{}) *Request {
 
 // Upsert sends "update or insert" action to Tarantool.
 // Result will not contain any tuple.
-func Upsert(space interface{}, tuple interface{}, ops interface{}) *Request {
+func Upsert(space interface{}, tuple interface{}, ops []Op) *Request {
 	return newRequest(UpsertRequest, func(conn *Connection) (func(enc *msgpack.Encoder) error, error) {
 		spaceNo, _, err := conn.schema.resolveSpaceIndex(space, nil)
 		if err != nil {

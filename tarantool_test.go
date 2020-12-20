@@ -566,7 +566,7 @@ func TestClient(t *testing.T) {
 	}
 
 	// Update.
-	resp, err = conn.Exec(Update(spaceNo, indexNo, []interface{}{uint(2)}, []interface{}{[]interface{}{"=", 1, "bye"}, []interface{}{"#", 2, 1}}))
+	resp, err = conn.Exec(Update(spaceNo, indexNo, []interface{}{uint(2)}, []Op{OpAssign(1, "bye"), OpDelete(2, 1)}))
 	if err != nil {
 		t.Errorf("Failed to Update: %s", err.Error())
 		return
@@ -598,14 +598,14 @@ func TestClient(t *testing.T) {
 
 	// Upsert
 	if strings.Compare(conn.greeting.Version, "Tarantool 1.6.7") >= 0 {
-		resp, err = conn.Exec(Upsert(spaceNo, []interface{}{uint(3), 1}, []interface{}{[]interface{}{"+", 1, 1}}))
+		resp, err = conn.Exec(Upsert(spaceNo, []interface{}{uint(3), 1}, []Op{OpAdd(1, 1)}))
 		if err != nil {
 			t.Errorf("Failed to Upsert (insert): %s", err.Error())
 		}
 		if resp == nil {
 			t.Errorf("Response is nil after Upsert (insert)")
 		}
-		resp, err = conn.Exec(Upsert(spaceNo, []interface{}{uint(3), 1}, []interface{}{[]interface{}{"+", 1, 1}}))
+		resp, err = conn.Exec(Upsert(spaceNo, []interface{}{uint(3), 1}, []Op{OpAdd(1, 1)}))
 		if err != nil {
 			t.Errorf("Failed to Upsert (update): %s", err.Error())
 		}
@@ -966,7 +966,7 @@ func TestClientNamed(t *testing.T) {
 	}
 
 	// Update
-	resp, err = conn.Exec(Update(spaceName, indexName, []interface{}{uint(1002)}, []interface{}{[]interface{}{"=", 1, "bye"}, []interface{}{"#", 2, 1}}))
+	resp, err = conn.Exec(Update(spaceName, indexName, []interface{}{uint(1002)}, []Op{OpAssign(1, "bye"), OpDelete(2, 1)}))
 	if err != nil {
 		t.Errorf("Failed to Update: %s", err.Error())
 	}
@@ -976,14 +976,14 @@ func TestClientNamed(t *testing.T) {
 
 	// Upsert
 	if strings.Compare(conn.greeting.Version, "Tarantool 1.6.7") >= 0 {
-		resp, err = conn.Exec(Upsert(spaceName, []interface{}{uint(1003), 1}, []interface{}{[]interface{}{"+", 1, 1}}))
+		resp, err = conn.Exec(Upsert(spaceName, []interface{}{uint(1003), 1}, []Op{OpAdd(1, 1)}))
 		if err != nil {
 			t.Errorf("Failed to Upsert (insert): %s", err.Error())
 		}
 		if resp == nil {
 			t.Errorf("Response is nil after Upsert (insert)")
 		}
-		resp, err = conn.Exec(Upsert(spaceName, []interface{}{uint(1003), 1}, []interface{}{[]interface{}{"+", 1, 1}}))
+		resp, err = conn.Exec(Upsert(spaceName, []interface{}{uint(1003), 1}, []Op{OpAdd(1, 1)}))
 		if err != nil {
 			t.Errorf("Failed to Upsert (update): %s", err.Error())
 		}

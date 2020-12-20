@@ -141,7 +141,7 @@ func Example() {
 	fmt.Println("Replace Data", resp.Data)
 
 	// update tuple with primary key { 13 }, incrementing second field by 3
-	resp, err = client.ExecContext(context.Background(), Update("test", "primary", UintKey{13}, []Op{{"+", 1, 3}}))
+	resp, err = client.ExecContext(context.Background(), Update("test", "primary", UintKey{13}, []Op{OpAdd(1, 3)}))
 	// or
 	// resp, err = client.Update(spaceNo, indexNo, []interface{}{uint(13)}, []interface{}{[]interface{}{"+", 1, 3}})
 	fmt.Println("Update Error", err)
