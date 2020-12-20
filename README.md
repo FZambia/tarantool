@@ -5,9 +5,9 @@
 
 The `tarantool` package allows communicating with [Tarantool 1.7.1+](http://tarantool.org/).
 
-This is an opinionated modification of [github.com/tarantool/go-tarantool](https://github.com/tarantool/go-tarantool) package, original license kept unchanged here at the moment.
+This is an opinionated modification of [github.com/tarantool/go-tarantool](https://github.com/tarantool/go-tarantool) package. The original license kept unchanged here at the moment.
 
-Differences from the original package:
+## Differences from the original package
 
 * API changed, some non-obvious (mostly to me personally) API removed.
 * This package uses the latest msgpack library [github.com/vmihailenco/msgpack/v5](https://github.com/vmihailenco/msgpack) instead of `v2` in original.
@@ -20,7 +20,7 @@ Differences from the original package:
 * Modified connection address behavior: refer to `Connect` function docs to see details.
 * Per-request timeout detached from underlying connection read and write timeouts.
 * `Op` type to express different update/upsert operations.
-* Several other cosmetic changes.
+* Some other cosmetic changes including several linter fixes.
 
 The networking core of `github.com/tarantool/go-tarantool` kept mostly unchanged at the moment so this package should behave in similar way.
 
