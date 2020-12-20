@@ -13,52 +13,52 @@ func (op Op) EncodeMsgpack(enc *msgpack.Encoder) error {
 }
 
 // OpAdd ...
-func OpAdd(field uint64, arg int64) Op {
+func OpAdd(field uint64, val interface{}) Op {
 	return Op{encode: func(enc *msgpack.Encoder) error {
 		_ = enc.EncodeArrayLen(3)
 		_ = enc.EncodeString("+")
 		_ = enc.EncodeUint(field)
-		return enc.EncodeInt(arg)
+		return enc.Encode(val)
 	}}
 }
 
 // OpSub ...
-func OpSub(field uint64, arg int64) Op {
+func OpSub(field uint64, val interface{}) Op {
 	return Op{encode: func(enc *msgpack.Encoder) error {
 		_ = enc.EncodeArrayLen(3)
 		_ = enc.EncodeString("-")
 		_ = enc.EncodeUint(field)
-		return enc.EncodeInt(arg)
+		return enc.Encode(val)
 	}}
 }
 
 // OpBitAND ...
-func OpBitAND(field, arg uint64) Op {
+func OpBitAND(field, val uint64) Op {
 	return Op{encode: func(enc *msgpack.Encoder) error {
 		_ = enc.EncodeArrayLen(3)
 		_ = enc.EncodeString("&")
 		_ = enc.EncodeUint(field)
-		return enc.EncodeUint(arg)
+		return enc.EncodeUint(val)
 	}}
 }
 
 // OpBitXOR ...
-func OpBitXOR(field, arg uint64) Op {
+func OpBitXOR(field, val uint64) Op {
 	return Op{encode: func(enc *msgpack.Encoder) error {
 		_ = enc.EncodeArrayLen(3)
 		_ = enc.EncodeString("^")
 		_ = enc.EncodeUint(field)
-		return enc.EncodeUint(arg)
+		return enc.EncodeUint(val)
 	}}
 }
 
 // OpBitOR ...
-func OpBitOR(field, arg uint64) Op {
+func OpBitOR(field, val uint64) Op {
 	return Op{encode: func(enc *msgpack.Encoder) error {
 		_ = enc.EncodeArrayLen(3)
 		_ = enc.EncodeString("|")
 		_ = enc.EncodeUint(field)
-		return enc.EncodeUint(arg)
+		return enc.EncodeUint(val)
 	}}
 }
 
@@ -73,22 +73,22 @@ func OpDelete(from, count uint64) Op {
 }
 
 // OpInsert ...
-func OpInsert(before uint64, arg interface{}) Op {
+func OpInsert(before uint64, val interface{}) Op {
 	return Op{encode: func(enc *msgpack.Encoder) error {
 		_ = enc.EncodeArrayLen(3)
 		_ = enc.EncodeString("!")
 		_ = enc.EncodeUint(before)
-		return enc.Encode(arg)
+		return enc.Encode(val)
 	}}
 }
 
 // OpAssign ...
-func OpAssign(field uint64, arg interface{}) Op {
+func OpAssign(field uint64, val interface{}) Op {
 	return Op{encode: func(enc *msgpack.Encoder) error {
 		_ = enc.EncodeArrayLen(3)
 		_ = enc.EncodeString("=")
 		_ = enc.EncodeUint(field)
-		return enc.Encode(arg)
+		return enc.Encode(val)
 	}}
 }
 
