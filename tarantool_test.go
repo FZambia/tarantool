@@ -87,12 +87,11 @@ var spaceNo = uint32(512)
 var spaceName = "test"
 var indexNo = uint32(0)
 var indexName = "primary"
+
 var opts = Opts{
 	RequestTimeout: 500 * time.Millisecond,
 	User:           "test",
 	Password:       "test",
-	//Concurrency:    32,
-	//RateLimit:      4 * 1024,
 }
 
 const N = 500
@@ -435,16 +434,18 @@ func TestClient(t *testing.T) {
 	}
 	defer func() { _ = conn.Close() }()
 
-	// Ping
+	// Ping.
 	resp, err = conn.Exec(Ping())
 	if err != nil {
 		t.Errorf("Failed to Ping: %s", err.Error())
+		return
 	}
 	if resp == nil {
 		t.Errorf("Response is nil after Ping")
+		return
 	}
 
-	// Insert
+	// Insert.
 	resp, err = conn.Exec(Insert(spaceNo, []interface{}{uint(1), "hello", "world"}))
 	if err != nil {
 		t.Errorf("Failed to Insert: %s", err.Error())
@@ -480,7 +481,7 @@ func TestClient(t *testing.T) {
 		return
 	}
 
-	// Delete
+	// Delete.
 	resp, err = conn.Exec(Delete(spaceNo, indexNo, []interface{}{uint(1)}))
 	if err != nil {
 		t.Errorf("Failed to Delete: %s", err.Error())
@@ -527,7 +528,7 @@ func TestClient(t *testing.T) {
 		t.Errorf("Response Data len != 0")
 	}
 
-	// Replace
+	// Replace.
 	resp, err = conn.Exec(Replace(spaceNo, []interface{}{uint(2), "hello", "world"}))
 	if err != nil {
 		t.Errorf("Failed to Replace: %s", err.Error())
@@ -596,7 +597,7 @@ func TestClient(t *testing.T) {
 		}
 	}
 
-	// Upsert
+	// Upsert.
 	if strings.Compare(conn.greeting.Version, "Tarantool 1.6.7") >= 0 {
 		resp, err = conn.Exec(Upsert(spaceNo, []interface{}{uint(3), 1}, []Op{OpAdd(1, 1)}))
 		if err != nil {
@@ -614,7 +615,7 @@ func TestClient(t *testing.T) {
 		}
 	}
 
-	// Select
+	// Select.
 	for i := 10; i < 20; i++ {
 		_, err = conn.Exec(Replace(spaceNo, []interface{}{uint(i), fmt.Sprintf("val %d", i), "bla"}))
 		if err != nil {
@@ -648,7 +649,7 @@ func TestClient(t *testing.T) {
 		}
 	}
 
-	// Select empty
+	// Select empty.
 	resp, err = conn.Exec(Select(spaceNo, indexNo, 0, 1, IterEq, []interface{}{uint(30)}))
 	if err != nil {
 		t.Errorf("Failed to Select: %s", err.Error())
@@ -666,7 +667,7 @@ func TestClient(t *testing.T) {
 		t.Errorf("Response Data len != 0")
 	}
 
-	// Select Typed
+	// Select Typed.
 	var tpl []Tuple
 	err = conn.ExecTypedContext(context.Background(), Select(spaceNo, indexNo, 0, 1, IterEq, []interface{}{uint(10)}), &tpl)
 	if err != nil {
@@ -680,7 +681,7 @@ func TestClient(t *testing.T) {
 		}
 	}
 
-	// Select Typed for one tuple
+	// Select Typed for one tuple.
 	var tpl1 [1]Tuple
 	err = conn.ExecTypedContext(context.Background(), Select(spaceNo, indexNo, 0, 1, IterEq, []interface{}{uint(10)}), &tpl1)
 	if err != nil {
@@ -694,7 +695,7 @@ func TestClient(t *testing.T) {
 		}
 	}
 
-	// Select Typed Empty
+	// Select Typed Empty.
 	var tpl2 []Tuple
 	err = conn.ExecTypedContext(context.Background(), Select(spaceNo, indexNo, 0, 1, IterEq, []interface{}{uint(30)}), &tpl2)
 	if err != nil {
@@ -756,7 +757,6 @@ func TestSchema(t *testing.T) {
 	}
 	defer func() { _ = conn.Close() }()
 
-	// schema
 	schema := conn.schema
 	if schema.SpacesByID == nil {
 		t.Errorf("schema.SpacesByID is nil")
@@ -885,17 +885,17 @@ func TestSchema(t *testing.T) {
 		t.Errorf("index.Fields len is incorrect")
 	}
 
-	ifield1 := index3.Fields[0]
-	ifield2 := index3.Fields[1]
-	if ifield1 == nil || ifield2 == nil {
+	iField1 := index3.Fields[0]
+	iField2 := index3.Fields[1]
+	if iField1 == nil || iField2 == nil {
 		t.Errorf("index field is nil")
 		return
 	}
-	if ifield1.ID != 1 || ifield2.ID != 2 {
+	if iField1.ID != 1 || iField2.ID != 2 {
 		t.Errorf("index field has incorrect ID")
 	}
-	if (ifield1.Type != "num" && ifield1.Type != "unsigned") || (ifield2.Type != "STR" && ifield2.Type != "string") {
-		t.Errorf("index field has incorrect Type '%s'", ifield2.Type)
+	if (iField1.Type != "num" && iField1.Type != "unsigned") || (iField2.Type != "STR" && iField2.Type != "string") {
+		t.Errorf("index field has incorrect Type '%s'", iField2.Type)
 	}
 
 	var rSpaceNo, rIndexNo uint32
@@ -941,13 +941,13 @@ func TestClientNamed(t *testing.T) {
 	}
 	defer func() { _ = conn.Close() }()
 
-	// Insert
+	// Insert.
 	_, err = conn.Exec(Insert(spaceName, []interface{}{uint(1001), "hello2", "world2"}))
 	if err != nil {
 		t.Errorf("Failed to Insert: %s", err.Error())
 	}
 
-	// Delete
+	// Delete.
 	resp, err = conn.Exec(Delete(spaceName, indexName, []interface{}{uint(1001)}))
 	if err != nil {
 		t.Errorf("Failed to Delete: %s", err.Error())
@@ -956,7 +956,7 @@ func TestClientNamed(t *testing.T) {
 		t.Errorf("Response is nil after Delete")
 	}
 
-	// Replace
+	// Replace.
 	resp, err = conn.Exec(Replace(spaceName, []interface{}{uint(1002), "hello", "world"}))
 	if err != nil {
 		t.Errorf("Failed to Replace: %s", err.Error())
@@ -965,7 +965,7 @@ func TestClientNamed(t *testing.T) {
 		t.Errorf("Response is nil after Replace")
 	}
 
-	// Update
+	// Update.
 	resp, err = conn.Exec(Update(spaceName, indexName, []interface{}{uint(1002)}, []Op{OpAssign(1, "bye"), OpDelete(2, 1)}))
 	if err != nil {
 		t.Errorf("Failed to Update: %s", err.Error())
@@ -974,7 +974,7 @@ func TestClientNamed(t *testing.T) {
 		t.Errorf("Response is nil after Update")
 	}
 
-	// Upsert
+	// Upsert.
 	if strings.Compare(conn.greeting.Version, "Tarantool 1.6.7") >= 0 {
 		resp, err = conn.Exec(Upsert(spaceName, []interface{}{uint(1003), 1}, []Op{OpAdd(1, 1)}))
 		if err != nil {
@@ -992,7 +992,7 @@ func TestClientNamed(t *testing.T) {
 		}
 	}
 
-	// Select
+	// Select.
 	for i := 1010; i < 1020; i++ {
 		_, err = conn.Exec(Replace(spaceName, []interface{}{uint(i), fmt.Sprintf("val %d", i), "bla"}))
 		if err != nil {
@@ -1007,7 +1007,7 @@ func TestClientNamed(t *testing.T) {
 		t.Errorf("Response is nil after Select")
 	}
 
-	// Select Typed
+	// Select Typed.
 	var tpl []Tuple
 	err = conn.ExecTypedContext(context.Background(), Select(spaceName, indexName, 0, 1, IterEq, []interface{}{uint(1010)}), &tpl)
 	if err != nil {

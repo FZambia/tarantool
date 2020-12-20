@@ -1,7 +1,6 @@
 package tarantool
 
 import (
-	"context"
 	"fmt"
 	"time"
 )
@@ -17,12 +16,12 @@ func exampleConnect() (*Connection, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = conn.ExecContext(context.Background(), Replace(spaceNo, []interface{}{uint(1111), "hello", "world"}))
+	_, err = conn.Exec(Replace(spaceNo, []interface{}{uint(1111), "hello", "world"}))
 	if err != nil {
 		_ = conn.Close()
 		return nil, err
 	}
-	_, err = conn.ExecContext(context.Background(), Replace(spaceNo, []interface{}{uint(1112), "hallo", "werld"}))
+	_, err = conn.Exec(Replace(spaceNo, []interface{}{uint(1112), "hallo", "werld"}))
 	if err != nil {
 		_ = conn.Close()
 		return nil, err
@@ -38,13 +37,13 @@ func ExampleConnection_Exec() {
 		return
 	}
 	defer func() { _ = conn.Close() }()
-	resp, err := conn.ExecContext(context.Background(), Select(512, 0, 0, 100, IterEq, []interface{}{uint(1111)}))
+	resp, err := conn.Exec(Select(512, 0, 0, 100, IterEq, []interface{}{uint(1111)}))
 	if err != nil {
 		fmt.Printf("error in select is %v", err)
 		return
 	}
 	fmt.Printf("response is %#v\n", resp.Data)
-	resp, err = conn.ExecContext(context.Background(), Select("test", "primary", 0, 100, IterEq, IntKey{1111}))
+	resp, err = conn.Exec(Select("test", "primary", 0, 100, IterEq, IntKey{1111}))
 	if err != nil {
 		fmt.Printf("error in select is %v", err)
 		return
@@ -64,13 +63,13 @@ func ExampleConnection_ExecTyped() {
 	}
 	defer func() { _ = conn.Close() }()
 	var res []Tuple
-	err = conn.ExecTypedContext(context.Background(), Select(512, 0, 0, 100, IterEq, IntKey{1111}), &res)
+	err = conn.ExecTyped(Select(512, 0, 0, 100, IterEq, IntKey{1111}), &res)
 	if err != nil {
 		fmt.Printf("error in select is %v", err)
 		return
 	}
 	fmt.Printf("response is %v\n", res)
-	err = conn.ExecTypedContext(context.Background(), Select("test", "primary", 0, 100, IterEq, IntKey{1111}), &res)
+	err = conn.ExecTyped(Select("test", "primary", 0, 100, IterEq, IntKey{1111}), &res)
 	if err != nil {
 		fmt.Printf("error in select is %v", err)
 		return
@@ -99,7 +98,7 @@ func Example() {
 		return
 	}
 
-	resp, err := client.ExecContext(context.Background(), Ping())
+	resp, err := client.Exec(Ping())
 	if err != nil {
 		fmt.Printf("failed to ping: %s", err.Error())
 		return
@@ -108,68 +107,63 @@ func Example() {
 	fmt.Println("Ping Data", resp.Data)
 	fmt.Println("Ping Error", err)
 
-	// delete tuple for cleaning
-	_, _ = client.ExecContext(context.Background(), Delete(spaceNo, indexNo, []interface{}{uint(10)}))
-	_, _ = client.ExecContext(context.Background(), Delete(spaceNo, indexNo, []interface{}{uint(11)}))
+	// Delete tuple for cleaning.
+	_, _ = client.Exec(Delete(spaceNo, indexNo, []interface{}{uint(10)}))
+	_, _ = client.Exec(Delete(spaceNo, indexNo, []interface{}{uint(11)}))
 
-	// insert new tuple { 10, 1 }
-	resp, err = client.ExecContext(context.Background(), Insert(spaceNo, []interface{}{uint(10), "test", "one"}))
+	// Insert new tuple { 10, 1 }.
+	resp, err = client.Exec(Insert(spaceNo, []interface{}{uint(10), "test", "one"}))
 	fmt.Println("Insert Error", err)
 	fmt.Println("Insert Code", resp.Code)
 	fmt.Println("Insert Data", resp.Data)
 
-	// insert new tuple { 11, 1 }
-	resp, err = client.ExecContext(context.Background(), Insert("test", &Tuple{ID: 10, Msg: "test", Name: "one"}))
+	// Insert new tuple { 11, 1 }.
+	resp, err = client.Exec(Insert("test", &Tuple{ID: 10, Msg: "test", Name: "one"}))
 	fmt.Println("Insert Error", err)
 	fmt.Println("Insert Code", resp.Code)
 	fmt.Println("Insert Data", resp.Data)
 
-	// delete tuple with primary key { 10 }
-	resp, err = client.ExecContext(context.Background(), Delete(spaceNo, indexNo, []interface{}{uint(10)}))
+	// Delete tuple with primary key { 10 }.
+	resp, err = client.Exec(Delete(spaceNo, indexNo, []interface{}{uint(10)}))
 	// or
-	// resp, err = client.Delete("test", "primary", UintKey{10}})
+	// resp, err = client.Exec(Delete("test", "primary", UintKey{10}}))
 	fmt.Println("Delete Error", err)
 	fmt.Println("Delete Code", resp.Code)
 	fmt.Println("Delete Data", resp.Data)
 
-	// replace tuple with primary key 13
-	// note, Tuple is defined within tests, and has EncodeMsgpack and DecodeMsgpack
-	// methods
-	resp, err = client.ExecContext(context.Background(), Replace(spaceNo, []interface{}{uint(13), 1}))
+	// Replace tuple with primary key 13.
+	resp, err = client.Exec(Replace(spaceNo, []interface{}{uint(13), 1}))
 	fmt.Println("Replace Error", err)
 	fmt.Println("Replace Code", resp.Code)
 	fmt.Println("Replace Data", resp.Data)
 
-	// update tuple with primary key { 13 }, incrementing second field by 3
-	resp, err = client.ExecContext(context.Background(), Update("test", "primary", UintKey{13}, []Op{OpAdd(1, 3)}))
+	// Update tuple with primary key { 13 }, incrementing second field by 3.
+	resp, err = client.Exec(Update("test", "primary", UintKey{13}, []Op{OpAdd(1, 3)}))
 	// or
-	// resp, err = client.Update(spaceNo, indexNo, []interface{}{uint(13)}, []interface{}{[]interface{}{"+", 1, 3}})
+	// resp, err = client.Exec(Update(spaceNo, indexNo, []interface{}{uint(13)}, []Op{OpAdd(1, 3)}))
 	fmt.Println("Update Error", err)
 	fmt.Println("Update Code", resp.Code)
 	fmt.Println("Update Data", resp.Data)
 
-	// select just one tuple with primary key { 15 }
-	resp, err = client.ExecContext(context.Background(), Select(spaceNo, indexNo, 0, 1, IterEq, []interface{}{uint(15)}))
+	// Select just one tuple with primary key { 15 }.
+	resp, err = client.Exec(Select(spaceNo, indexNo, 0, 1, IterEq, []interface{}{uint(15)}))
 	// or
-	// resp, err = client.Select("test", "primary", 0, 1, IterEq, UintKey{15})
+	// resp, err = client.Exec(Select("test", "primary", 0, 1, IterEq, UintKey{15}))
 	fmt.Println("Select Error", err)
 	fmt.Println("Select Code", resp.Code)
 	fmt.Println("Select Data", resp.Data)
 
-	// call function 'func_name' with arguments
-	resp, err = client.ExecContext(context.Background(), Call("simple_incr", []interface{}{1}))
+	// Call function 'func_name' with arguments.
+	resp, err = client.Exec(Call("simple_incr", []interface{}{1}))
 	fmt.Println("Call Error", err)
 	fmt.Println("Call Code", resp.Code)
 	fmt.Println("Call Data", resp.Data)
 
-	// run raw lua code
-	resp, err = client.ExecContext(context.Background(), Eval("return 1 + 2", []interface{}{}))
+	// Run raw lua code.
+	resp, err = client.Exec(Eval("return 1 + 2", []interface{}{}))
 	fmt.Println("Eval Error", err)
 	fmt.Println("Eval Code", resp.Code)
 	fmt.Println("Eval Data", resp.Data)
-
-	resp, err = client.ExecContext(context.Background(), Replace("test", &Tuple{ID: 11, Msg: "test", Name: "eleven"}))
-	resp, err = client.ExecContext(context.Background(), Replace("test", &Tuple{ID: 12, Msg: "test", Name: "twelve"}))
 
 	// Output:
 	// Ping Code 0

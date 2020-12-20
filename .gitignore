@@ -1,6 +1,7 @@
 vendor/
 .vscode
 .idea
-snap/
-xlog/
+*.snap
+*.xlog
+*.snap.inprogress
 .rocks/

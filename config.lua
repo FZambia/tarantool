@@ -36,7 +36,6 @@ st:create_index('secondary', {
 })
 st:truncate()
 
---box.schema.user.grant('guest', 'read,write,execute', 'universe')
 box.schema.func.create('box.info')
 box.schema.func.create('simple_incr')
 

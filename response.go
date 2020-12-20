@@ -155,18 +155,3 @@ func (resp *Response) String() (str string) {
 	}
 	return fmt.Sprintf("<%d ERR 0x%x %s>", resp.RequestID, resp.Code, resp.Error)
 }
-
-// Tuples converts result of Eval and Call to same format
-// as other actions returns (ie array of arrays).
-func (resp *Response) Tuples() (res [][]interface{}) {
-	res = make([][]interface{}, len(resp.Data))
-	for i, t := range resp.Data {
-		switch t := t.(type) {
-		case []interface{}:
-			res[i] = t
-		default:
-			res[i] = []interface{}{t}
-		}
-	}
-	return res
-}
