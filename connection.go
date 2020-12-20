@@ -897,11 +897,11 @@ func (conn *Connection) putFuture(fut *futureImpl, body func(*msgpack.Encoder) e
 		} else if f != nil {
 			/* in theory, it is possible. In practice, you have
 			 * to have race condition that lasts hours */
-			panic("Unknown future")
+			panic("unknown future")
 		} else {
 			fut.wait()
 			if fut.err == nil {
-				panic("futureImpl removed from queue without error")
+				panic("future removed from queue without error")
 			}
 			if _, ok := fut.err.(ClientError); ok {
 				// packing error is more important than connection

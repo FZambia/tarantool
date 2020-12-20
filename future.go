@@ -7,11 +7,13 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
+// Future allows to extract response from server as soon as it's ready.
 type Future interface {
 	Get() (*Response, error)
 	GetTyped(result interface{}) error
 }
 
+// FutureContext allows to extract response from server as soon as it's ready with Context.
 type FutureContext interface {
 	GetContext(ctx context.Context) (*Response, error)
 	GetTypedContext(ctx context.Context, result interface{}) error
@@ -27,6 +29,62 @@ type futureImpl struct {
 	err       error
 	ready     chan struct{}
 	next      *futureImpl
+}
+
+// Get waits for future to be filled and returns Response and error.
+//
+// Response will contain deserialized result in Data field.
+// It will be []interface{}, so if you want more performance, use GetTyped method.
+//
+// Note: Response could be equal to nil if ClientError is returned in error.
+//
+// "error" could be Error, if it is error returned by Tarantool,
+// or ClientError, if something bad happens in a client process.
+func (fut *futureImpl) Get() (*Response, error) {
+	fut.wait()
+	if fut.err != nil {
+		return fut.resp, fut.err
+	}
+	fut.err = fut.resp.decodeBody()
+	return fut.resp, fut.err
+}
+
+// GetTyped waits for future and decodes response into result if no error happens.
+// This could be much faster than Get() function.
+func (fut *futureImpl) GetTyped(result interface{}) error {
+	fut.wait()
+	if fut.err != nil {
+		return fut.err
+	}
+	fut.err = fut.resp.decodeBodyTyped(result)
+	return fut.err
+}
+
+// GetContext waits for future to be filled and returns Response and error.
+func (fut *futureImpl) GetContext(ctx context.Context) (*Response, error) {
+	fut.waitContext(ctx)
+	if fut.err != nil {
+		if fut.err == context.DeadlineExceeded || fut.err == context.Canceled {
+			fut.conn.fetchFuture(fut.requestID)
+		}
+		return fut.resp, fut.err
+	}
+	fut.err = fut.resp.decodeBody()
+	return fut.resp, fut.err
+}
+
+// GetTypedContext waits for futureImpl and calls msgpack.Decoder.Decode(result) if no error happens.
+// It is could be much faster than GetContext() function.
+func (fut *futureImpl) GetTypedContext(ctx context.Context, result interface{}) error {
+	fut.waitContext(ctx)
+	if fut.err != nil {
+		if fut.err == context.DeadlineExceeded || fut.err == context.Canceled {
+			fut.conn.fetchFuture(fut.requestID)
+		}
+		return fut.err
+	}
+	fut.err = fut.resp.decodeBodyTyped(result)
+	return fut.err
 }
 
 func (fut *futureImpl) markPushReady(resp *Response) {
@@ -68,61 +126,6 @@ func (fut *futureImpl) wait() {
 		return
 	}
 	<-fut.ready
-}
-
-func (fut *futureImpl) Get() (*Response, error) {
-	fut.wait()
-	if fut.err != nil {
-		return fut.resp, fut.err
-	}
-	fut.err = fut.resp.decodeBody()
-	return fut.resp, fut.err
-}
-
-// GetContext waits for futureImpl to be filled and returns Response and error
-//
-// Response will contain deserialized result in Data field.
-// It will be []interface{}, so if you want more performance, use GetTypedContext method.
-//
-// Note: Response could be equal to nil if ClientError is returned in error.
-//
-// "error" could be Error, if it is error returned by Tarantool,
-// or ClientError, if something bad happens in a client process.
-func (fut *futureImpl) GetContext(ctx context.Context) (*Response, error) {
-	fut.waitContext(ctx)
-	if fut.err != nil {
-		if fut.err == context.DeadlineExceeded || fut.err == context.Canceled {
-			fut.conn.fetchFuture(fut.requestID)
-		}
-		return fut.resp, fut.err
-	}
-	fut.err = fut.resp.decodeBody()
-	return fut.resp, fut.err
-}
-
-func (fut *futureImpl) GetTyped(result interface{}) error {
-	fut.wait()
-	if fut.err != nil {
-		return fut.err
-	}
-	fut.err = fut.resp.decodeBodyTyped(result)
-	return fut.err
-}
-
-// GetTypedContext waits for futureImpl and calls msgpack.Decoder.Decode(result) if no error happens.
-// It is could be much faster than GetContext() function.
-//
-// Note: Tarantool usually returns array of tuples (except for Eval and Call actions).
-func (fut *futureImpl) GetTypedContext(ctx context.Context, result interface{}) error {
-	fut.waitContext(ctx)
-	if fut.err != nil {
-		if fut.err == context.DeadlineExceeded || fut.err == context.Canceled {
-			fut.conn.fetchFuture(fut.requestID)
-		}
-		return fut.err
-	}
-	fut.err = fut.resp.decodeBodyTyped(result)
-	return fut.err
 }
 
 func fillSearch(enc *msgpack.Encoder, spaceNo, indexNo uint32, key interface{}) error {
