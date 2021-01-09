@@ -5,9 +5,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/url"
 	"runtime"
@@ -74,26 +72,6 @@ type ConnEvent struct {
 // Logger is logger type expected to be passed in options.
 type Logger interface {
 	Report(event ConnLogKind, conn *Connection, v ...interface{})
-}
-
-type defaultLogger struct{}
-
-func (d defaultLogger) Report(event ConnLogKind, conn *Connection, v ...interface{}) {
-	switch event {
-	case LogReconnectFailed:
-		reconnects := v[0].(uint64)
-		err := v[1].(error)
-		log.Printf("tarantool: reconnect (%d/%d) to %s://%s failed: %s\n", reconnects, conn.opts.MaxReconnects, conn.opts.network, conn.opts.address, err.Error())
-	case LogLastReconnectFailed:
-		err := v[0].(error)
-		log.Printf("tarantool: last reconnect to %s://%s failed: %s, giving it up.\n", conn.opts.network, conn.opts.address, err.Error())
-	case LogUnexpectedResultID:
-		resp := v[0].(*Response)
-		log.Printf("tarantool: connection %s://%s got unexpected resultId (%d) in response", conn.opts.network, conn.opts.address, resp.RequestID)
-	default:
-		args := append([]interface{}{"tarantool: unexpected event ", event, conn}, v...)
-		log.Print(args...)
-	}
 }
 
 // Connection to Tarantool.
@@ -212,7 +190,7 @@ type Opts struct {
 	Notify chan<- ConnEvent
 	// Handle is user specified value, that could be retrieved with Handle() method.
 	Handle interface{}
-	// Logger is user specified logger used for error messages.
+	// Logger is user specified logger used for log messages.
 	Logger Logger
 
 	network string
@@ -274,10 +252,6 @@ func Connect(addr string, opts Opts) (conn *Connection, err error) {
 		if opts.RLimitAction != RLimitDrop && opts.RLimitAction != RLimitWait {
 			return nil, errors.New("RLimitAction should be specified to RLimitDone nor RLimitWait")
 		}
-	}
-
-	if conn.opts.Logger == nil {
-		conn.opts.Logger = defaultLogger{}
 	}
 
 	if err = conn.createConnection(false); err != nil {
@@ -408,7 +382,7 @@ func (conn *Connection) timeouts() {
 					}
 					fut.err = ClientError{
 						Code: ErrTimedOut,
-						Msg:  fmt.Sprintf("client timeout for request %d", fut.requestID),
+						Msg:  "request timeout",
 					}
 					fut.markReady(conn)
 					shard.bufMu.Unlock()
@@ -632,12 +606,16 @@ func (conn *Connection) createConnection(reconnect bool) (err error) {
 			return
 		}
 		if conn.opts.MaxReconnects > 0 && reconnects > conn.opts.MaxReconnects {
-			conn.opts.Logger.Report(LogLastReconnectFailed, conn, err)
+			if conn.opts.Logger != nil {
+				conn.opts.Logger.Report(LogLastReconnectFailed, conn, err)
+			}
 			err = ClientError{ErrConnectionClosed, "last reconnect failed"}
 			// mark connection as closed to avoid reopening by another goroutine.
 			return
 		}
-		conn.opts.Logger.Report(LogReconnectFailed, conn, reconnects, err)
+		if conn.opts.Logger != nil {
+			conn.opts.Logger.Report(LogReconnectFailed, conn, reconnects, err)
+		}
 		conn.notify(ReconnectFailed)
 		reconnects++
 		conn.mutex.Unlock()
@@ -797,7 +775,9 @@ func (conn *Connection) reader(r *bufio.Reader, c net.Conn) {
 			if fut := conn.peekFuture(resp.RequestID); fut != nil {
 				fut.markPushReady(resp)
 			} else {
-				conn.opts.Logger.Report(LogUnexpectedResultID, conn, resp)
+				if conn.opts.Logger != nil {
+					conn.opts.Logger.Report(LogUnexpectedResultID, conn, resp)
+				}
 			}
 			continue
 		}
@@ -805,7 +785,9 @@ func (conn *Connection) reader(r *bufio.Reader, c net.Conn) {
 			fut.resp = resp
 			fut.markReady(conn)
 		} else {
-			conn.opts.Logger.Report(LogUnexpectedResultID, conn, resp)
+			if conn.opts.Logger != nil {
+				conn.opts.Logger.Report(LogUnexpectedResultID, conn, resp)
+			}
 		}
 	}
 }

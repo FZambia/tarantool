@@ -285,6 +285,35 @@ func BenchmarkClientFutureParallelTyped(b *testing.B) {
 	})
 }
 
+func BenchmarkClientParallelTimeouts(b *testing.B) {
+	var err error
+
+	var options = Opts{
+		RequestTimeout: time.Millisecond,
+		User:           "test",
+		Password:       "test",
+		SkipSchema:     true,
+	}
+
+	conn, err := Connect(server, options)
+	if err != nil {
+		b.Errorf("No connection available")
+		return
+	}
+	defer func() { _ = conn.Close() }()
+
+	b.SetParallelism(1024)
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_, err := conn.Exec(Call("timeout", [][]interface{}{}))
+			if err.(ClientError).Code != ErrTimedOut {
+				b.Fatal(err.Error())
+			}
+		}
+	})
+}
+
 func BenchmarkClientParallel(b *testing.B) {
 	conn, err := Connect(server, opts)
 	if err != nil {

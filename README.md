@@ -21,6 +21,7 @@ This is an opinionated modification of [github.com/tarantool/go-tarantool](https
 * Per-request timeout detached from underlying connection read and write timeouts.
 * `Op` type to express different update/upsert operations.
 * Some other cosmetic changes including several linter fixes.
+* No default `Logger` – developer needs to provide custom implementation explicitly.
 
 The networking core of `github.com/tarantool/go-tarantool` kept mostly unchanged at the moment so this package should behave in similar way.
 

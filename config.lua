@@ -1,4 +1,9 @@
-box.cfg{}
+fiber = require 'fiber'
+
+box.cfg{
+    readahead = 10 * 1024 * 1024, -- to keep up with benchmark load.
+    net_msg_max = 10 * 1024, -- to keep up with benchmark load.
+}
 
 box.once("init", function()
 local s = box.schema.space.create('test', {
@@ -45,6 +50,11 @@ box.schema.user.grant('test', 'execute', 'universe')
 box.schema.user.grant('test', 'read,write', 'space', 'test')
 box.schema.user.grant('test', 'read,write', 'space', 'schematest')
 end)
+
+function timeout()
+    fiber.sleep(1)
+    return 1
+end
 
 function simple_incr(a)
     return a+1
