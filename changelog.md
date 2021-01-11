@@ -22,4 +22,3 @@ Changes from the original:
 * Per-request timeout detached from underlying connection read and write timeouts.
 * `Op` type to express different update/upsert operations.
 * Some other cosmetic changes including several linter fixes.
-* No default `Logger` – developer needs to provide custom implementation explicitly.
