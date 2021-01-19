@@ -322,7 +322,7 @@ func (conn *Connection) ExecContext(ctx context.Context, req *Request) (*Respons
 
 // Exec Request with context.Context and decode it to typed result.
 func (conn *Connection) ExecTypedContext(ctx context.Context, req *Request, result interface{}) error {
-	if _, ok := ctx.Deadline(); !ok {
+	if _, ok := ctx.Deadline(); !ok && conn.opts.RequestTimeout > 0 {
 		var cancel func()
 		ctx, cancel = context.WithTimeout(ctx, conn.opts.RequestTimeout)
 		defer cancel()
