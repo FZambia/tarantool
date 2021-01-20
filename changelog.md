@@ -1,3 +1,8 @@
+v0.1.1
+======
+
+* Fix calling ExecTypedContext w/o timeout - see [#1](https://github.com/FZambia/tarantool/pull/1)
+
 v0.1.0
 ======
 

@@ -2,13 +2,14 @@ package tarantool
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -308,8 +309,12 @@ func BenchmarkClientParallelTimeouts(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			_, err := conn.Exec(Call("timeout", [][]interface{}{}))
-			if err.(ClientError).Code != ErrTimedOut {
-				b.Fatal(err.Error())
+			if err != nil {
+				if err.(ClientError).Code != ErrTimedOut {
+					b.Fatal(err.Error())
+				}
+			} else {
+				b.Fatal("timeout error expected")
 			}
 		}
 	})
@@ -1084,8 +1089,6 @@ func TestComplexStructs(t *testing.T) {
 }
 
 func TestExecContext(t *testing.T) {
-	assert := assert.New(t)
-
 	var err error
 	var connWithTimeout *Connection
 	var connNoTimeout *Connection
@@ -1102,10 +1105,10 @@ func TestExecContext(t *testing.T) {
 		User:     opts.User,
 		Password: opts.Password,
 	})
-	assert.Nil(err)
-	assert.NotNil(connNoTimeout)
+	require.NoError(t, err)
+	require.NotNil(t, connNoTimeout)
 
-	defer connNoTimeout.Close()
+	defer func() { _ = connNoTimeout.Close() }()
 
 	// exec without timeout - shouldn't fail
 	err = connNoTimeout.ExecTypedContext(
@@ -1113,13 +1116,13 @@ func TestExecContext(t *testing.T) {
 		req,
 		&result,
 	)
-	assert.Nil(err)
+	require.NoError(t, err)
 
 	_, err = connNoTimeout.ExecContext(
 		context.Background(),
 		req,
 	)
-	assert.Nil(err)
+	require.NoError(t, err)
 
 	// exec with timeout - should fail
 	ctx, cancel = context.WithTimeout(context.Background(), 200*time.Millisecond)
@@ -1131,8 +1134,8 @@ func TestExecContext(t *testing.T) {
 		&result,
 	)
 
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "context deadline exceeded")
+	require.Error(t, err)
+	require.True(t, errors.Is(err, context.DeadlineExceeded))
 
 	ctx, cancel = context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancel()
@@ -1141,8 +1144,8 @@ func TestExecContext(t *testing.T) {
 		ctx,
 		req,
 	)
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "context deadline exceeded")
+	require.Error(t, err)
+	require.True(t, errors.Is(err, context.DeadlineExceeded))
 
 	// connection w/ request timeout
 	connWithTimeout, err = Connect(server, Opts{
@@ -1150,10 +1153,10 @@ func TestExecContext(t *testing.T) {
 		Password:       opts.Password,
 		RequestTimeout: 200 * time.Millisecond,
 	})
-	assert.Nil(err)
-	assert.NotNil(connWithTimeout)
+	require.NoError(t, err)
+	require.NotNil(t, connWithTimeout)
 
-	defer connWithTimeout.Close()
+	defer func() { _ = connWithTimeout.Close() }()
 
 	// exec without timeout - should fail
 	err = connWithTimeout.ExecTypedContext(
@@ -1161,15 +1164,15 @@ func TestExecContext(t *testing.T) {
 		req,
 		&result,
 	)
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "context deadline exceeded")
+	require.Error(t, err)
+	require.True(t, errors.Is(err, context.DeadlineExceeded))
 
 	_, err = connWithTimeout.ExecContext(
 		context.Background(),
 		req,
 	)
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "context deadline exceeded")
+	require.Error(t, err)
+	require.True(t, errors.Is(err, context.DeadlineExceeded))
 
 	// exec with timeout - should fail
 	ctx, cancel = context.WithTimeout(context.Background(), 200*time.Millisecond)
@@ -1181,8 +1184,8 @@ func TestExecContext(t *testing.T) {
 		&result,
 	)
 
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "context deadline exceeded")
+	require.Error(t, err)
+	require.True(t, errors.Is(err, context.DeadlineExceeded))
 
 	ctx, cancel = context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancel()
@@ -1191,6 +1194,6 @@ func TestExecContext(t *testing.T) {
 		ctx,
 		req,
 	)
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "context deadline exceeded")
+	require.Error(t, err)
+	require.True(t, errors.Is(err, context.DeadlineExceeded))
 }
