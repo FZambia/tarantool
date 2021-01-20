@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -1080,4 +1081,116 @@ func TestComplexStructs(t *testing.T) {
 		t.Errorf("Failed to selectTyped: incorrect data")
 		return
 	}
+}
+
+func TestExecContext(t *testing.T) {
+	assert := assert.New(t)
+
+	var err error
+	var connWithTimeout *Connection
+	var connNoTimeout *Connection
+	var result []interface{}
+
+	var ctx context.Context
+	var cancel context.CancelFunc
+
+	// long request
+	req := Eval("require('fiber').sleep(0.5)", []interface{}{})
+
+	// connection w/o request timeout
+	connNoTimeout, err = Connect(server, Opts{
+		User:     opts.User,
+		Password: opts.Password,
+	})
+	assert.Nil(err)
+	assert.NotNil(connNoTimeout)
+
+	defer connNoTimeout.Close()
+
+	// exec without timeout - shouldn't fail
+	err = connNoTimeout.ExecTypedContext(
+		context.Background(),
+		req,
+		&result,
+	)
+	assert.Nil(err)
+
+	_, err = connNoTimeout.ExecContext(
+		context.Background(),
+		req,
+	)
+	assert.Nil(err)
+
+	// exec with timeout - should fail
+	ctx, cancel = context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	err = connNoTimeout.ExecTypedContext(
+		ctx,
+		req,
+		&result,
+	)
+
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "context deadline exceeded")
+
+	ctx, cancel = context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	_, err = connNoTimeout.ExecContext(
+		ctx,
+		req,
+	)
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "context deadline exceeded")
+
+	// connection w/ request timeout
+	connWithTimeout, err = Connect(server, Opts{
+		User:           opts.User,
+		Password:       opts.Password,
+		RequestTimeout: 200 * time.Millisecond,
+	})
+	assert.Nil(err)
+	assert.NotNil(connWithTimeout)
+
+	defer connWithTimeout.Close()
+
+	// exec without timeout - should fail
+	err = connWithTimeout.ExecTypedContext(
+		context.Background(),
+		req,
+		&result,
+	)
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "context deadline exceeded")
+
+	_, err = connWithTimeout.ExecContext(
+		context.Background(),
+		req,
+	)
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "context deadline exceeded")
+
+	// exec with timeout - should fail
+	ctx, cancel = context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	err = connWithTimeout.ExecTypedContext(
+		ctx,
+		req,
+		&result,
+	)
+
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "context deadline exceeded")
+
+	ctx, cancel = context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	_, err = connWithTimeout.ExecContext(
+		ctx,
+		req,
+	)
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "context deadline exceeded")
 }
