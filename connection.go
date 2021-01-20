@@ -213,9 +213,6 @@ type Opts struct {
 // Unix socket:
 // 	- unix:///var/run/tarantool/my_instance.sock
 // 	- unix://user:pass@/var/run/tarantool/my_instance.sock?connect_timeout=5s
-//
-// Note: Connect will always return an error if first connection attempt failed even if
-// reconnect configured.
 func Connect(addr string, opts Opts) (conn *Connection, err error) {
 	opts, err = optsFromAddr(addr, opts)
 	if err != nil {
