@@ -5,11 +5,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/url"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -400,14 +402,17 @@ func (conn *Connection) timeouts() {
 }
 
 func optsFromAddr(addr string, opts Opts) (Opts, error) {
-	u, err := url.Parse(addr)
-	if err != nil {
-		if _, _, err := net.SplitHostPort(addr); err == nil {
+	if !strings.HasPrefix(addr, "tcp://") && !strings.HasPrefix(addr, "unix://") {
+		if host, port, err := net.SplitHostPort(addr); err == nil && host != "" && port != "" {
 			opts.network = "tcp"
 			opts.address = addr
 			return opts, nil
 		}
 		return opts, errors.New("malformed connection address")
+	}
+	u, err := url.Parse(addr)
+	if err != nil {
+		return opts, fmt.Errorf("malformed connection address URL: %w", err)
 	}
 	switch u.Scheme {
 	case "tcp":

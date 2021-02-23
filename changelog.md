@@ -1,3 +1,8 @@
+v0.2.0
+======
+
+* Fix parsing connection address with non-ip host and without `tcp://` scheme, like `localhost:3301` - previously connecting with such an address resulted in configuration error
+
 v0.1.1
 ======
 
