@@ -1,6 +1,7 @@
 fiber = require 'fiber'
 
 box.cfg{
+    listen = '127.0.0.1:3301',
     readahead = 10 * 1024 * 1024, -- to keep up with benchmark load.
     net_msg_max = 10 * 1024, -- to keep up with benchmark load.
 }

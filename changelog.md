@@ -1,3 +1,8 @@
+v0.2.1
+======
+
+* Fix type conversion causing panic on schema load - see [#3](https://github.com/FZambia/tarantool/issues/3)
+
 v0.2.0
 ======
 

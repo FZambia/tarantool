@@ -151,7 +151,7 @@ func (conn *Connection) loadSchema() (err error) {
 			cnt := int(fields)
 			for i := 0; i < cnt; i++ {
 				field := new(IndexField)
-				field.ID = uint32(row[6+i*2].(uint64))
+				field.ID = uint32(row[6+i*2].(int64))
 				field.Type = row[7+i*2].(string)
 				index.Fields = append(index.Fields, field)
 			}
@@ -163,7 +163,7 @@ func (conn *Connection) loadSchema() (err error) {
 					field.ID = uint32(f[0].(int64))
 					field.Type = f[1].(string)
 				case map[interface{}]interface{}:
-					field.ID = uint32(f["field"].(uint64))
+					field.ID = uint32(f["field"].(int64))
 					field.Type = f["type"].(string)
 				}
 				index.Fields = append(index.Fields, field)
