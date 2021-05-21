@@ -1,3 +1,8 @@
+v0.2.2
+======
+
+* Up msgpack dependency
+
 v0.2.1
 ======
 

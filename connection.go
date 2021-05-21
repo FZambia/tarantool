@@ -257,8 +257,7 @@ func Connect(addr string, opts Opts) (conn *Connection, err error) {
 		ter, ok := err.(Error)
 		if conn.opts.ReconnectDelay <= 0 {
 			return nil, err
-		} else if ok && (ter.Code == ErrNoSuchUser ||
-			ter.Code == ErrPasswordMismatch) {
+		} else if ok && (ter.Code == ErrNoSuchUser || ter.Code == ErrPasswordMismatch) {
 			// Report auth errors immediately.
 			return nil, err
 		} else {
