@@ -1,3 +1,18 @@
+v0.2.3
+======
+
+* Add `DisableArrayEncodedStructs` option.
+
+```
+> gorelease -base v0.2.2 -version v0.2.3
+github.com/FZambia/tarantool
+----------------------------
+Compatible changes:
+- Opts.DisableArrayEncodedStructs: added
+
+v0.2.3 is a valid semantic version for this release.
+```
+
 v0.2.2
 ======
 
