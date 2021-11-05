@@ -195,6 +195,10 @@ type Opts struct {
 	// Logger is user specified logger used for log messages.
 	Logger Logger
 
+	// DisableArrayEncodedStructs allows disabling usage of UseArrayEncodedStructs option
+	// of msgpack Encoder.
+	DisableArrayEncodedStructs bool
+
 	network string
 	address string
 }
@@ -867,7 +871,7 @@ func (conn *Connection) putFuture(fut *futureImpl, body func(*msgpack.Encoder) e
 	if cap(shard.buf) == 0 {
 		shard.buf = make(smallWBuf, 0, 128)
 		enc := msgpack.NewEncoder(&shard.buf)
-		enc.UseArrayEncodedStructs(true)
+		enc.UseArrayEncodedStructs(!conn.opts.DisableArrayEncodedStructs)
 		shard.enc = enc
 	}
 	bufLen := len(shard.buf)
