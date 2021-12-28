@@ -81,7 +81,7 @@ type Logger interface {
 // It is created and configured with Connect function, and could not be
 // reconfigured later.
 //
-// It is could be "Connected", "Disconnected", and "Closed".
+// Connection can be "Connected", "Disconnected", and "Closed".
 //
 // When "Connected" it sends queries to Tarantool.
 //
@@ -96,7 +96,7 @@ type Logger interface {
 // You may perform data manipulation operation by executing:
 // Call, Insert, Replace, Update, Upsert, Eval.
 //
-// In any method that accepts `space` you my pass either space number or
+// In any method that accepts `space` you may pass either space number or
 // space name (in this case it will be looked up in schema). Same is true for `index`.
 //
 // ATTENTION: `tuple`, `key`, `ops` and `args` arguments for any method should be
@@ -141,7 +141,7 @@ type Greeting struct {
 
 // Opts is a way to configure Connection.
 type Opts struct {
-	// User name for auth.
+	// User for auth.
 	User string
 	// Password for auth.
 	Password string
@@ -151,9 +151,9 @@ type Opts struct {
 	// RequestTimeout is a default requests timeout. Can be overridden
 	// on per-operation basis using context.Context.
 	RequestTimeout time.Duration
-	// ReadTimeout used to setup underlying connection ReadDeadline.
+	// ReadTimeout used to set up underlying connection ReadDeadline.
 	ReadTimeout time.Duration
-	// WriteTimeout used to setup underlying connection WriteDeadline.
+	// WriteTimeout used to set up underlying connection WriteDeadline.
 	WriteTimeout time.Duration
 	// ReconnectDelay is a pause between reconnection attempts.
 	// If specified, then when tarantool is not reachable or disconnected,
@@ -184,8 +184,8 @@ type Opts struct {
 	RLimitAction uint32
 	// Concurrency is amount of separate mutexes for request
 	// queues and buffers inside of connection.
-	// It is rounded upto nearest power of 2.
-	// By default it is runtime.GOMAXPROCS(-1) * 4
+	// It is rounded upto the nearest power of 2.
+	// By default, it is runtime.GOMAXPROCS(-1) * 4
 	Concurrency uint32
 
 	// Notify is a channel which receives notifications about Connection status changes.
@@ -302,17 +302,19 @@ func (conn *Connection) NetConn() net.Conn {
 	return conn.c
 }
 
-// Exec Request.
+// Exec Request on Tarantool server.
 func (conn *Connection) Exec(req *Request) (*Response, error) {
 	return conn.newFuture(req, true).Get()
 }
 
-// Exec Request and decode it to typed result.
+// ExecTyped execs request and decodes it to a typed result.
 func (conn *Connection) ExecTyped(req *Request, result interface{}) error {
 	return conn.newFuture(req, true).GetTyped(result)
 }
 
-// Exec Request with context.Context.
+// ExecContext execs Request with context.Context. Note, that context
+// cancellation/timeout won't result into ongoing request cancellation
+// on Tarantool side.
 func (conn *Connection) ExecContext(ctx context.Context, req *Request) (*Response, error) {
 	if _, ok := ctx.Deadline(); !ok && conn.opts.RequestTimeout > 0 {
 		var cancel func()
@@ -322,7 +324,9 @@ func (conn *Connection) ExecContext(ctx context.Context, req *Request) (*Respons
 	return conn.newFuture(req, false).GetContext(ctx)
 }
 
-// Exec Request with context.Context and decode it to typed result.
+// ExecTypedContext execs Request with context.Context and decodes it to a typed result.
+// Note, that context cancellation/timeout won't result into ongoing request cancellation
+// on Tarantool side.
 func (conn *Connection) ExecTypedContext(ctx context.Context, req *Request, result interface{}) error {
 	if _, ok := ctx.Deadline(); !ok && conn.opts.RequestTimeout > 0 {
 		var cancel func()
@@ -332,14 +336,15 @@ func (conn *Connection) ExecTypedContext(ctx context.Context, req *Request, resu
 	return conn.newFuture(req, false).GetTypedContext(ctx, result)
 }
 
-// Exec Request but do not wait for result - it's then possible to get
-// result from returned Future.
+// ExecAsync execs Request but does not wait for a result - it's then possible to get
+// a result from the returned Future.
 func (conn *Connection) ExecAsync(req *Request) Future {
 	return conn.newFuture(req, true)
 }
 
-// Exec Request but do not wait for result - it's then possible to get
-// result from returned FutureContext.
+// ExecAsyncContext execs Request but does not wait for a result - it's then possible
+// to get a result from the returned FutureContext. Note, that context cancellation/timeout
+// won't result into ongoing request cancellation on Tarantool side.
 func (conn *Connection) ExecAsyncContext(req *Request) FutureContext {
 	return conn.newFuture(req, false)
 }
