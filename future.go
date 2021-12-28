@@ -13,7 +13,7 @@ type Future interface {
 	GetTyped(result interface{}) error
 }
 
-// FutureContext allows to extract response from server as soon as it's ready with Context.
+// FutureContext allows extracting response from server as soon as it's ready with Context.
 type FutureContext interface {
 	GetContext(ctx context.Context) (*Response, error)
 	GetTypedContext(ctx context.Context, result interface{}) error
@@ -74,7 +74,7 @@ func (fut *futureImpl) GetContext(ctx context.Context) (*Response, error) {
 }
 
 // GetTypedContext waits for futureImpl and calls msgpack.Decoder.Decode(result) if no error happens.
-// It is could be much faster than GetContext() function.
+// It could be much faster than GetContext() function.
 func (fut *futureImpl) GetTypedContext(ctx context.Context, result interface{}) error {
 	fut.waitContext(ctx)
 	if fut.err != nil {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-// Error is wrapper around error returned by Tarantool
+// Error is wrapper around error returned by Tarantool.
 type Error struct {
 	Code uint32
 	Msg  string
@@ -14,8 +14,7 @@ func (err Error) Error() string {
 	return fmt.Sprintf("%s (0x%x)", err.Msg, err.Code)
 }
 
-// ClientError is connection produced by this client,
-// ie connection failures or timeouts.
+// ClientError is connection produced by this client – i.e. connection failures or timeouts.
 type ClientError struct {
 	Code uint32
 	Msg  string
@@ -26,7 +25,7 @@ func (err ClientError) Error() string {
 }
 
 // Temporary returns true if next attempt to perform request may succeed.
-// Currently it returns true when:
+// Currently, it returns true when:
 // - Connection is not connected at the moment,
 // - or request is timed out,
 // - or request is aborted due to rate limit.

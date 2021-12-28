@@ -12,7 +12,8 @@ type Response struct {
 	Error     string
 	// Data contains deserialized data for untyped requests.
 	Data []interface{}
-	buf  smallBuf
+
+	buf smallBuf
 }
 
 func (resp *Response) smallInt(d *msgpack.Decoder) (i int, err error) {
