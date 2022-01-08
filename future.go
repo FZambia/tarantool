@@ -9,13 +9,13 @@ import (
 
 // Future allows to extract response from server as soon as it's ready.
 type Future interface {
-	Get() (*Response, error)
+	Get() ([]interface{}, error)
 	GetTyped(result interface{}) error
 }
 
 // FutureContext allows extracting response from server as soon as it's ready with Context.
 type FutureContext interface {
-	GetContext(ctx context.Context) (*Response, error)
+	GetContext(ctx context.Context) ([]interface{}, error)
 	GetTypedContext(ctx context.Context, result interface{}) error
 }
 
@@ -25,28 +25,31 @@ type futureImpl struct {
 	timeout   time.Duration
 	conn      *Connection
 	req       *Request
-	resp      *Response
+	resp      *response
 	err       error
 	ready     chan struct{}
 	next      *futureImpl
 }
 
-// Get waits for future to be filled and returns Response and error.
+// Get waits for future to be filled and returns result and error.
 //
-// Response will contain deserialized result in Data field.
-// It will be []interface{}, so if you want more performance, use GetTyped method.
+// Result will contain data deserialized into []interface{}. if you want more
+// performance, use GetTyped method.
 //
 // Note: Response could be equal to nil if ClientError is returned in error.
 //
-// "error" could be Error, if it is error returned by Tarantool,
-// or ClientError, if something bad happens in a client process.
-func (fut *futureImpl) Get() (*Response, error) {
+// Error could be Error, if it is error returned by Tarantool, or ClientError, if
+// something bad happens in a client process.
+func (fut *futureImpl) Get() ([]interface{}, error) {
 	fut.wait()
 	if fut.err != nil {
-		return fut.resp, fut.err
+		return nil, fut.err
 	}
 	fut.err = fut.resp.decodeBody()
-	return fut.resp, fut.err
+	if fut.err != nil {
+		return nil, fut.err
+	}
+	return fut.resp.data, nil
 }
 
 // GetTyped waits for future and decodes response into result if no error happens.
@@ -60,21 +63,24 @@ func (fut *futureImpl) GetTyped(result interface{}) error {
 	return fut.err
 }
 
-// GetContext waits for future to be filled and returns Response and error.
-func (fut *futureImpl) GetContext(ctx context.Context) (*Response, error) {
+// GetContext waits for future to be filled and returns result and error.
+func (fut *futureImpl) GetContext(ctx context.Context) ([]interface{}, error) {
 	fut.waitContext(ctx)
 	if fut.err != nil {
 		if fut.err == context.DeadlineExceeded || fut.err == context.Canceled {
 			fut.conn.fetchFuture(fut.requestID)
 		}
-		return fut.resp, fut.err
+		return nil, fut.err
 	}
 	fut.err = fut.resp.decodeBody()
-	return fut.resp, fut.err
+	if fut.err != nil {
+		return nil, fut.err
+	}
+	return fut.resp.data, nil
 }
 
-// GetTypedContext waits for futureImpl and calls msgpack.Decoder.Decode(result) if no error happens.
-// It could be much faster than GetContext() function.
+// GetTypedContext waits for futureImpl and calls msgpack.Decoder.Decode(result) if
+// no error happens. It could be much faster than GetContext() function.
 func (fut *futureImpl) GetTypedContext(ctx context.Context, result interface{}) error {
 	fut.waitContext(ctx)
 	if fut.err != nil {
@@ -87,14 +93,14 @@ func (fut *futureImpl) GetTypedContext(ctx context.Context, result interface{}) 
 	return fut.err
 }
 
-func (fut *futureImpl) markPushReady(resp *Response) {
+func (fut *futureImpl) markPushReady(resp *response) {
 	if fut.req.push == nil && fut.req.pushTyped == nil {
 		return
 	}
 	if fut.req.push != nil {
 		err := resp.decodeBody()
 		if err == nil {
-			fut.req.push(resp)
+			fut.req.push(resp.data)
 		}
 		return
 	}

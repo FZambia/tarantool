@@ -59,8 +59,6 @@ const (
 )
 
 func (conn *Connection) loadSchema() (err error) {
-	var resp *Response
-
 	schema := new(Schema)
 	schema.SpacesByID = make(map[uint32]*Space)
 	schema.Spaces = make(map[string]*Space)
@@ -68,11 +66,11 @@ func (conn *Connection) loadSchema() (err error) {
 	// Reload spaces.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	resp, err = conn.ExecContext(ctx, Select(vSpaceSpID, 0, 0, maxSchemas, IterAll, []interface{}{}))
+	resp, err := conn.ExecContext(ctx, Select(vSpaceSpID, 0, 0, maxSchemas, IterAll, []interface{}{}))
 	if err != nil {
 		return err
 	}
-	for _, row := range resp.Data {
+	for _, row := range resp {
 		row := row.([]interface{})
 		space := new(Space)
 		space.ID = uint32(row[0].(uint64))
@@ -127,7 +125,7 @@ func (conn *Connection) loadSchema() (err error) {
 	if err != nil {
 		return err
 	}
-	for _, row := range resp.Data {
+	for _, row := range resp {
 		row := row.([]interface{})
 		index := new(Index)
 		index.ID = uint32(row[1].(int64))

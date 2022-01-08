@@ -54,8 +54,8 @@ const (
 	RLimitWait = 2
 )
 
-// Response related const.
+// response related const.
 const (
-	OkCode       = uint32(0)
-	ErrorCodeBit = 0x8000
+	okCode       = uint32(0)
+	errorCodeBit = 0x8000
 )

@@ -303,7 +303,7 @@ func (conn *Connection) NetConn() net.Conn {
 }
 
 // Exec Request on Tarantool server.
-func (conn *Connection) Exec(req *Request) (*Response, error) {
+func (conn *Connection) Exec(req *Request) ([]interface{}, error) {
 	return conn.newFuture(req, true).Get()
 }
 
@@ -315,7 +315,7 @@ func (conn *Connection) ExecTyped(req *Request, result interface{}) error {
 // ExecContext execs Request with context.Context. Note, that context
 // cancellation/timeout won't result into ongoing request cancellation
 // on Tarantool side.
-func (conn *Connection) ExecContext(ctx context.Context, req *Request) (*Response, error) {
+func (conn *Connection) ExecContext(ctx context.Context, req *Request) ([]interface{}, error) {
 	if _, ok := ctx.Deadline(); !ok && conn.opts.RequestTimeout > 0 {
 		var cancel func()
 		ctx, cancel = context.WithTimeout(ctx, conn.opts.RequestTimeout)
@@ -587,7 +587,7 @@ func (conn *Connection) readAuthResponse(r io.Reader) (err error) {
 	if err != nil {
 		return errors.New("auth: read error " + err.Error())
 	}
-	resp := Response{buf: smallBuf{b: respBytes}}
+	resp := response{buf: smallBuf{b: respBytes}}
 	err = resp.decodeHeader(conn.dec)
 	if err != nil {
 		return errors.New("auth: decode response header error " + err.Error())
@@ -775,14 +775,14 @@ func (conn *Connection) reader(r *bufio.Reader, c net.Conn) {
 			conn.reconnect(err, c)
 			return
 		}
-		resp := &Response{buf: smallBuf{b: respBytes}}
+		resp := &response{buf: smallBuf{b: respBytes}}
 		err = resp.decodeHeader(conn.dec)
 		if err != nil {
 			conn.reconnect(err, c)
 			return
 		}
-		if resp.Code == KeyPush {
-			if fut := conn.peekFuture(resp.RequestID); fut != nil {
+		if resp.code == KeyPush {
+			if fut := conn.peekFuture(resp.requestID); fut != nil {
 				fut.markPushReady(resp)
 			} else {
 				if conn.opts.Logger != nil {
@@ -791,7 +791,7 @@ func (conn *Connection) reader(r *bufio.Reader, c net.Conn) {
 			}
 			continue
 		}
-		if fut := conn.fetchFuture(resp.RequestID); fut != nil {
+		if fut := conn.fetchFuture(resp.requestID); fut != nil {
 			fut.resp = resp
 			fut.markReady(conn)
 		} else {
