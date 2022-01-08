@@ -103,7 +103,7 @@ type Logger interface {
 // and array or should serialize to msgpack array.
 type Connection struct {
 	state     uint32 // Keep atomics on top to work on 32-bit architectures.
-	requestID uint32
+	requestID uint32 // Keep atomics on top to work on 32-bit architectures.
 
 	c     net.Conn
 	mutex sync.Mutex
@@ -302,7 +302,8 @@ func (conn *Connection) NetConn() net.Conn {
 	return conn.c
 }
 
-// Exec Request on Tarantool server.
+// Exec Request on Tarantool server. Return untyped result and error.
+// Use ExecTyped for more performance and convenience.
 func (conn *Connection) Exec(req *Request) ([]interface{}, error) {
 	return conn.newFuture(req, true).Get()
 }

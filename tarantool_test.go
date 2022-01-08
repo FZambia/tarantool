@@ -140,7 +140,7 @@ func BenchmarkClientSerialTyped(b *testing.B) {
 	var r []Tuple
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err = conn.ExecTypedContext(context.Background(), Select(spaceNo, indexNo, 0, 1, IterEq, IntKey{I: 1111}), &r)
+		err = conn.ExecTyped(Select(spaceNo, indexNo, 0, 1, IterEq, IntKey{I: 1111}), &r)
 		if err != nil {
 			b.Errorf("No connection available")
 		}

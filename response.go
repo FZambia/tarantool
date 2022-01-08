@@ -146,13 +146,3 @@ func (resp *response) decodeBodyTyped(res interface{}) (err error) {
 	}
 	return
 }
-
-// String implements Stringer interface.
-func (resp *response) String() (str string) {
-	if resp.code == okCode {
-		return fmt.Sprintf("<%d OK %v>", resp.requestID, resp.data)
-	} else if resp.code == KeyPush {
-		return fmt.Sprintf("<%d PUSH %v>", resp.requestID, resp.data)
-	}
-	return fmt.Sprintf("<%d ERR 0x%x %s>", resp.requestID, resp.code, resp.error)
-}
