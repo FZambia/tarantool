@@ -1,3 +1,25 @@
+v0.3.0
+======
+
+* Removing `Response` type from public API – see [#8](https://github.com/FZambia/tarantool/pull/8) for details.
+
+```
+> gorelease -base v0.2.3 -version v0.3.0
+# github.com/FZambia/tarantool
+## incompatible changes
+(*Connection).Exec: changed from func(*Request) (*Response, error) to func(*Request) ([]interface{}, error)
+(*Connection).ExecContext: changed from func(context.Context, *Request) (*Response, error) to func(context.Context, *Request) ([]interface{}, error)
+(*Request).WithPush: changed from func(func(*Response)) *Request to func(func([]interface{})) *Request
+ErrorCodeBit: removed
+Future.Get: changed from func() (*Response, error) to func() ([]interface{}, error)
+FutureContext.GetContext: changed from func(context.Context) (*Response, error) to func(context.Context) ([]interface{}, error)
+OkCode: removed
+Response: removed
+
+# summary
+v0.3.0 is a valid semantic version for this release.
+```
+
 v0.2.3
 ======
 
