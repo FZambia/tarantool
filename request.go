@@ -8,7 +8,7 @@ import (
 type Request struct {
 	requestCode int32
 	sendFunc    func(conn *Connection) (func(enc *msgpack.Encoder) error, error)
-	push        func(*Response)
+	push        func([]interface{})
 	pushTyped   func(func(interface{}) error)
 }
 
@@ -20,7 +20,7 @@ func newRequest(requestCode int32, cb func(conn *Connection) (func(enc *msgpack.
 }
 
 // WithPush allows setting Push handler to Request.
-func (req *Request) WithPush(pushCB func(*Response)) *Request {
+func (req *Request) WithPush(pushCB func([]interface{})) *Request {
 	req.push = pushCB
 	return req
 }

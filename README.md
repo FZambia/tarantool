@@ -11,7 +11,8 @@ This is an opinionated modification of [github.com/tarantool/go-tarantool](https
 
 * API changed, some non-obvious (mostly to me personally) API removed.
 * This package uses the latest msgpack library [github.com/vmihailenco/msgpack/v5](https://github.com/vmihailenco/msgpack) instead of `v2` in original.
-* Uses `enc.UseArrayEncodedStructs(true)` for `msgpack.Encoder` by default so there is no need to define `msgpack:",as_array"` struct tags. If you need to disable this (for example when using nested structs) then this behavior can be disabled using `DisableArrayEncodedStructs` option.
+* Uses `UseArrayEncodedStructs(true)` for `msgpack.Encoder` by default so there is no need to define `msgpack:",as_array"` struct tags. If you need to disable this (for example when using nested structs) then this behavior can be disabled using `DisableArrayEncodedStructs` option.
+* Uses `UseLooseInterfaceDecoding(true)` for `msgpack.Decoder` to decode response into untyped `[]interface{}` result. See [decoding rules](https://pkg.go.dev/github.com/vmihailenco/msgpack/v5#Decoder.DecodeInterfaceLoose).
 * Supports out-of-bound pushes (see [box.session.push](https://www.tarantool.io/en/doc/latest/reference/reference_lua/box_session/#box-session-push))
 * Adds optional support for `context.Context` (though performance will suffer a bit, if you want a maximum performance then use non-context methods which use per-connection timeout). Context cancellation does not cancel a query (Tarantool has no such functionality) - just stops waiting for request future resolving.
 * Uses sync.Pool for `*msgpack.Decoder` to reduce allocations on decoding stage a bit. Actually this package allocates a bit more than the original one, but allocations are small and overall performance is comparable to the original (based on observations from internal benchmarks). 

@@ -28,7 +28,7 @@ func (k UintKey) EncodeMsgpack(enc *msgpack.Encoder) error {
 	return nil
 }
 
-// UintKey is utility type for passing string key to Select, Update and Delete.
+// StringKey is utility type for passing string key to Select, Update and Delete.
 // It serializes to array with single string element.
 type StringKey struct {
 	S string

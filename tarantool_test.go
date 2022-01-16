@@ -140,7 +140,7 @@ func BenchmarkClientSerialTyped(b *testing.B) {
 	var r []Tuple
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err = conn.ExecTypedContext(context.Background(), Select(spaceNo, indexNo, 0, 1, IterEq, IntKey{I: 1111}), &r)
+		err = conn.ExecTyped(Select(spaceNo, indexNo, 0, 1, IterEq, IntKey{I: 1111}), &r)
 		if err != nil {
 			b.Errorf("No connection available")
 		}
@@ -420,7 +420,6 @@ func BenchmarkClientParallelMassiveUntyped(b *testing.B) {
 }
 
 func TestClientBoxInfoCall(t *testing.T) {
-	var resp *Response
 	var err error
 	var conn *Connection
 
@@ -435,26 +434,21 @@ func TestClientBoxInfoCall(t *testing.T) {
 	}
 	defer func() { _ = conn.Close() }()
 
-	resp, err = conn.Exec(Call("box.info", []interface{}{"box.schema.SPACE_ID"}))
+	result, err := conn.Exec(Call("box.info", []interface{}{"box.schema.SPACE_ID"}))
 	if err != nil {
 		t.Errorf("Failed to Call: %s", err.Error())
 		return
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Call")
+	if result == nil {
+		t.Errorf("Result is nil after Call")
 		return
 	}
-	if resp.Data == nil {
-		t.Errorf("Data is nil after Call")
-		return
-	}
-	if len(resp.Data) < 1 {
-		t.Errorf("Response.Data is empty after Call")
+	if len(result) < 1 {
+		t.Errorf("Result is empty after Call")
 	}
 }
 
 func TestClient(t *testing.T) {
-	var resp *Response
 	var err error
 	var conn *Connection
 
@@ -470,34 +464,26 @@ func TestClient(t *testing.T) {
 	defer func() { _ = conn.Close() }()
 
 	// Ping.
-	resp, err = conn.Exec(Ping())
+	_, err = conn.Exec(Ping())
 	if err != nil {
 		t.Errorf("Failed to Ping: %s", err.Error())
 		return
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Ping")
-		return
-	}
 
 	// Insert.
-	resp, err = conn.Exec(Insert(spaceNo, []interface{}{uint(1), "hello", "world"}))
+	result, err := conn.Exec(Insert(spaceNo, []interface{}{uint(1), "hello", "world"}))
 	if err != nil {
 		t.Errorf("Failed to Insert: %s", err.Error())
 		return
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Insert")
-		return
-	}
-	if resp.Data == nil {
+	if result == nil {
 		t.Errorf("Data is nil after Insert")
 		return
 	}
-	if len(resp.Data) != 1 {
+	if len(result) != 1 {
 		t.Errorf("Response Body len != 1")
 	}
-	if tpl, ok := resp.Data[0].([]interface{}); !ok {
+	if tpl, ok := result[0].([]interface{}); !ok {
 		t.Errorf("Unexpected body of Insert")
 	} else {
 		if len(tpl) != 3 {
@@ -517,23 +503,19 @@ func TestClient(t *testing.T) {
 	}
 
 	// Delete.
-	resp, err = conn.Exec(Delete(spaceNo, indexNo, []interface{}{uint(1)}))
+	result, err = conn.Exec(Delete(spaceNo, indexNo, []interface{}{uint(1)}))
 	if err != nil {
 		t.Errorf("Failed to Delete: %s", err.Error())
 		return
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Delete")
-		return
-	}
-	if resp.Data == nil {
+	if result == nil {
 		t.Errorf("Data is nil after Delete")
 		return
 	}
-	if len(resp.Data) != 1 {
+	if len(result) != 1 {
 		t.Errorf("Response Body len != 1")
 	}
-	if tpl, ok := resp.Data[0].([]interface{}); !ok {
+	if tpl, ok := result[0].([]interface{}); !ok {
 		t.Errorf("Unexpected body of Delete")
 	} else {
 		if len(tpl) != 3 {
@@ -546,48 +528,44 @@ func TestClient(t *testing.T) {
 			t.Errorf("Unexpected body of Delete (1)")
 		}
 	}
-	resp, err = conn.Exec(Delete(spaceNo, indexNo, []interface{}{uint(101)}))
+	result, err = conn.Exec(Delete(spaceNo, indexNo, []interface{}{uint(101)}))
 	if err != nil {
 		t.Errorf("Failed to Delete: %s", err.Error())
 		return
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Delete")
-		return
-	}
-	if resp.Data == nil {
+	if result == nil {
 		t.Errorf("Data is nil after Insert")
 		return
 	}
-	if len(resp.Data) != 0 {
+	if len(result) != 0 {
 		t.Errorf("Response Data len != 0")
 	}
 
 	// Replace.
-	resp, err = conn.Exec(Replace(spaceNo, []interface{}{uint(2), "hello", "world"}))
+	result, err = conn.Exec(Replace(spaceNo, []interface{}{uint(2), "hello", "world"}))
 	if err != nil {
 		t.Errorf("Failed to Replace: %s", err.Error())
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Replace")
+	if err != nil {
+		t.Errorf("Failed to Replace: %s", err.Error())
+		return
 	}
-	resp, err = conn.Exec(Replace(spaceNo, []interface{}{uint(2), "hi", "planet"}))
+	if result == nil {
+		t.Errorf("Result is nil after Replace")
+	}
+	result, err = conn.Exec(Replace(spaceNo, []interface{}{uint(2), "hi", "planet"}))
 	if err != nil {
 		t.Errorf("Failed to Replace (duplicate): %s", err.Error())
 		return
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Replace (duplicate)")
-		return
-	}
-	if resp.Data == nil {
+	if result == nil {
 		t.Errorf("Data is nil after Insert")
 		return
 	}
-	if len(resp.Data) != 1 {
+	if len(result) != 1 {
 		t.Errorf("Response Data len != 1")
 	}
-	if tpl, ok := resp.Data[0].([]interface{}); !ok {
+	if tpl, ok := result[0].([]interface{}); !ok {
 		t.Errorf("Unexpected body of Replace")
 	} else {
 		if len(tpl) != 3 {
@@ -602,23 +580,19 @@ func TestClient(t *testing.T) {
 	}
 
 	// Update.
-	resp, err = conn.Exec(Update(spaceNo, indexNo, []interface{}{uint(2)}, []Op{OpAssign(1, "bye"), OpDelete(2, 1)}))
+	result, err = conn.Exec(Update(spaceNo, indexNo, []interface{}{uint(2)}, []Op{OpAssign(1, "bye"), OpDelete(2, 1)}))
 	if err != nil {
 		t.Errorf("Failed to Update: %s", err.Error())
 		return
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Update")
-		return
-	}
-	if resp.Data == nil {
+	if result == nil {
 		t.Errorf("Data is nil after Insert")
 		return
 	}
-	if len(resp.Data) != 1 {
+	if len(result) != 1 {
 		t.Errorf("Response Data len != 1")
 	}
-	if tpl, ok := resp.Data[0].([]interface{}); !ok {
+	if tpl, ok := result[0].([]interface{}); !ok {
 		t.Errorf("Unexpected body of Update")
 	} else {
 		if len(tpl) != 2 {
@@ -634,19 +608,19 @@ func TestClient(t *testing.T) {
 
 	// Upsert.
 	if strings.Compare(conn.greeting.Version, "Tarantool 1.6.7") >= 0 {
-		resp, err = conn.Exec(Upsert(spaceNo, []interface{}{uint(3), 1}, []Op{OpAdd(1, 1)}))
+		result, err = conn.Exec(Upsert(spaceNo, []interface{}{uint(3), 1}, []Op{OpAdd(1, 1)}))
 		if err != nil {
 			t.Errorf("Failed to Upsert (insert): %s", err.Error())
 		}
-		if resp == nil {
-			t.Errorf("Response is nil after Upsert (insert)")
+		if result == nil {
+			t.Errorf("Result is nil after Upsert (insert)")
 		}
-		resp, err = conn.Exec(Upsert(spaceNo, []interface{}{uint(3), 1}, []Op{OpAdd(1, 1)}))
+		result, err = conn.Exec(Upsert(spaceNo, []interface{}{uint(3), 1}, []Op{OpAdd(1, 1)}))
 		if err != nil {
 			t.Errorf("Failed to Upsert (update): %s", err.Error())
 		}
-		if resp == nil {
-			t.Errorf("Response is nil after Upsert (update)")
+		if result == nil {
+			t.Errorf("Result is nil after Upsert (update)")
 		}
 	}
 
@@ -657,23 +631,19 @@ func TestClient(t *testing.T) {
 			t.Errorf("Failed to Replace: %s", err.Error())
 		}
 	}
-	resp, err = conn.Exec(Select(spaceNo, indexNo, 0, 1, IterEq, []interface{}{uint(10)}))
+	result, err = conn.Exec(Select(spaceNo, indexNo, 0, 1, IterEq, []interface{}{uint(10)}))
 	if err != nil {
 		t.Errorf("Failed to Select: %s", err.Error())
 		return
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Select")
+	if result == nil {
+		t.Errorf("Result is nil after Select")
 		return
 	}
-	if resp.Data == nil {
-		t.Errorf("Data is nil after Select")
-		return
-	}
-	if len(resp.Data) != 1 {
+	if len(result) != 1 {
 		t.Errorf("Response Data len != 1")
 	}
-	if tpl, ok := resp.Data[0].([]interface{}); !ok {
+	if tpl, ok := result[0].([]interface{}); !ok {
 		t.Errorf("Unexpected body of Select")
 	} else {
 		if id, ok := tpl[0].(int64); !ok || id != 10 {
@@ -685,20 +655,16 @@ func TestClient(t *testing.T) {
 	}
 
 	// Select empty.
-	resp, err = conn.Exec(Select(spaceNo, indexNo, 0, 1, IterEq, []interface{}{uint(30)}))
+	result, err = conn.Exec(Select(spaceNo, indexNo, 0, 1, IterEq, []interface{}{uint(30)}))
 	if err != nil {
 		t.Errorf("Failed to Select: %s", err.Error())
 		return
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Select")
+	if result == nil {
+		t.Errorf("Result is nil after Select")
 		return
 	}
-	if resp.Data == nil {
-		t.Errorf("Data is nil after Select")
-		return
-	}
-	if len(resp.Data) != 0 {
+	if len(result) != 0 {
 		t.Errorf("Response Data len != 0")
 	}
 
@@ -741,33 +707,29 @@ func TestClient(t *testing.T) {
 	}
 
 	// Call.
-	resp, err = conn.Exec(Call("simple_incr", []interface{}{1}))
+	result, err = conn.Exec(Call("simple_incr", []interface{}{1}))
 	if err != nil {
 		t.Errorf("Failed to Call: %s", err.Error())
 		return
 	}
-	if resp.Data[0].(int64) != 2 {
-		t.Errorf("result is not {{1}} : %v", resp.Data)
+	if result[0].(int64) != 2 {
+		t.Errorf("result is not {{1}} : %v", result)
 	}
 
 	// Eval.
-	resp, err = conn.Exec(Eval("return 5 + 6", []interface{}{}))
+	result, err = conn.Exec(Eval("return 5 + 6", []interface{}{}))
 	if err != nil {
 		t.Errorf("Failed to Eval: %s", err.Error())
 		return
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Eval")
+	if result == nil {
+		t.Errorf("Result is nil after Eval")
 		return
 	}
-	if resp.Data == nil {
-		t.Errorf("Data is nil after Eval")
-		return
-	}
-	if len(resp.Data) < 1 {
+	if len(result) < 1 {
 		t.Errorf("Response.Data is empty after Eval")
 	}
-	val := resp.Data[0].(int64)
+	val := result[0].(int64)
 	if val != 11 {
 		t.Errorf("5 + 6 == 11, but got %v", val)
 	}
@@ -961,7 +923,6 @@ func TestSchema(t *testing.T) {
 }
 
 func TestClientNamed(t *testing.T) {
-	var resp *Response
 	var err error
 	var conn *Connection
 
@@ -983,47 +944,47 @@ func TestClientNamed(t *testing.T) {
 	}
 
 	// Delete.
-	resp, err = conn.Exec(Delete(spaceName, indexName, []interface{}{uint(1001)}))
+	result, err := conn.Exec(Delete(spaceName, indexName, []interface{}{uint(1001)}))
 	if err != nil {
 		t.Errorf("Failed to Delete: %s", err.Error())
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Delete")
+	if result == nil {
+		t.Errorf("Result is nil after Delete")
 	}
 
 	// Replace.
-	resp, err = conn.Exec(Replace(spaceName, []interface{}{uint(1002), "hello", "world"}))
+	result, err = conn.Exec(Replace(spaceName, []interface{}{uint(1002), "hello", "world"}))
 	if err != nil {
 		t.Errorf("Failed to Replace: %s", err.Error())
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Replace")
+	if result == nil {
+		t.Errorf("Result is nil after Replace")
 	}
 
 	// Update.
-	resp, err = conn.Exec(Update(spaceName, indexName, []interface{}{uint(1002)}, []Op{OpAssign(1, "bye"), OpDelete(2, 1)}))
+	result, err = conn.Exec(Update(spaceName, indexName, []interface{}{uint(1002)}, []Op{OpAssign(1, "bye"), OpDelete(2, 1)}))
 	if err != nil {
 		t.Errorf("Failed to Update: %s", err.Error())
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Update")
+	if result == nil {
+		t.Errorf("Result is nil after Update")
 	}
 
 	// Upsert.
 	if strings.Compare(conn.greeting.Version, "Tarantool 1.6.7") >= 0 {
-		resp, err = conn.Exec(Upsert(spaceName, []interface{}{uint(1003), 1}, []Op{OpAdd(1, 1)}))
+		result, err = conn.Exec(Upsert(spaceName, []interface{}{uint(1003), 1}, []Op{OpAdd(1, 1)}))
 		if err != nil {
 			t.Errorf("Failed to Upsert (insert): %s", err.Error())
 		}
-		if resp == nil {
-			t.Errorf("Response is nil after Upsert (insert)")
+		if result == nil {
+			t.Errorf("Result is nil after Upsert (insert)")
 		}
-		resp, err = conn.Exec(Upsert(spaceName, []interface{}{uint(1003), 1}, []Op{OpAdd(1, 1)}))
+		result, err = conn.Exec(Upsert(spaceName, []interface{}{uint(1003), 1}, []Op{OpAdd(1, 1)}))
 		if err != nil {
 			t.Errorf("Failed to Upsert (update): %s", err.Error())
 		}
-		if resp == nil {
-			t.Errorf("Response is nil after Upsert (update)")
+		if result == nil {
+			t.Errorf("Result is nil after Upsert (update)")
 		}
 	}
 
@@ -1034,12 +995,12 @@ func TestClientNamed(t *testing.T) {
 			t.Errorf("Failed to Replace: %s", err.Error())
 		}
 	}
-	resp, err = conn.Exec(Select(spaceName, indexName, 0, 1, IterEq, []interface{}{uint(1010)}))
+	result, err = conn.Exec(Select(spaceName, indexName, 0, 1, IterEq, []interface{}{uint(1010)}))
 	if err != nil {
 		t.Errorf("Failed to Select: %s", err.Error())
 	}
-	if resp == nil {
-		t.Errorf("Response is nil after Select")
+	if result == nil {
+		t.Errorf("Result is nil after Select")
 	}
 
 	// Select Typed.
@@ -1140,12 +1101,13 @@ func TestExecContext(t *testing.T) {
 	ctx, cancel = context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancel()
 
-	_, err = connNoTimeout.ExecContext(
+	result, err = connNoTimeout.ExecContext(
 		ctx,
 		req,
 	)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, context.DeadlineExceeded))
+	require.Nil(t, result)
 
 	// connection w/ request timeout
 	connWithTimeout, err = Connect(server, Opts{
@@ -1196,4 +1158,47 @@ func TestExecContext(t *testing.T) {
 	)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, context.DeadlineExceeded))
+}
+
+func TestServerError(t *testing.T) {
+	var err error
+	var conn *Connection
+
+	conn, err = Connect(server, opts)
+	if err != nil {
+		t.Errorf("Failed to connect: %s", err.Error())
+		return
+	}
+	if conn == nil {
+		t.Errorf("conn is nil after Connect")
+		return
+	}
+	defer func() { _ = conn.Close() }()
+
+	_, err = conn.Exec(Eval("error('boom')", []interface{}{}))
+	require.Error(t, err)
+	var e Error
+	ok := errors.As(err, &e)
+	require.True(t, ok)
+	require.EqualValues(t, ErrProcLua, e.Code)
+}
+
+func TestErrorDecode(t *testing.T) {
+	var err error
+	var conn *Connection
+
+	conn, err = Connect(server, opts)
+	if err != nil {
+		t.Errorf("Failed to connect: %s", err.Error())
+		return
+	}
+	if conn == nil {
+		t.Errorf("conn is nil after Connect")
+		return
+	}
+	defer func() { _ = conn.Close() }()
+
+	var s [][]string
+	err = conn.ExecTyped(Eval("return 1, 3", []interface{}{}), &s)
+	require.Error(t, err)
 }

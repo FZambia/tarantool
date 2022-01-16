@@ -37,21 +37,21 @@ func ExampleConnection_Exec() {
 		return
 	}
 	defer func() { _ = conn.Close() }()
-	resp, err := conn.Exec(Select(512, 0, 0, 100, IterEq, []interface{}{uint(1111)}))
+	result, err := conn.Exec(Select(512, 0, 0, 100, IterEq, []interface{}{uint(1111)}))
 	if err != nil {
 		fmt.Printf("error in select is %v", err)
 		return
 	}
-	fmt.Printf("response is %#v\n", resp.Data)
-	resp, err = conn.Exec(Select("test", "primary", 0, 100, IterEq, IntKey{1111}))
+	fmt.Printf("result is %#v\n", result)
+	result, err = conn.Exec(Select("test", "primary", 0, 100, IterEq, IntKey{1111}))
 	if err != nil {
 		fmt.Printf("error in select is %v", err)
 		return
 	}
-	fmt.Printf("response is %#v\n", resp.Data)
+	fmt.Printf("result is %#v\n", result)
 	// Output:
-	// response is []interface {}{[]interface {}{0x457, "hello", "world"}}
-	// response is []interface {}{[]interface {}{0x457, "hello", "world"}}
+	// result is []interface {}{[]interface {}{0x457, "hello", "world"}}
+	// result is []interface {}{[]interface {}{0x457, "hello", "world"}}
 }
 
 func ExampleConnection_ExecTyped() {
@@ -98,99 +98,79 @@ func Example() {
 		return
 	}
 
-	resp, err := client.Exec(Ping())
+	result, err := client.Exec(Ping())
 	if err != nil {
 		fmt.Printf("failed to ping: %s", err.Error())
 		return
 	}
-	fmt.Println("Ping Code", resp.Code)
-	fmt.Println("Ping Data", resp.Data)
-	fmt.Println("Ping Error", err)
+	fmt.Println("Ping Result", result)
 
 	// Delete tuple for cleaning.
 	_, _ = client.Exec(Delete(spaceNo, indexNo, []interface{}{uint(10)}))
 	_, _ = client.Exec(Delete(spaceNo, indexNo, []interface{}{uint(11)}))
 
 	// Insert new tuple { 10, 1 }.
-	resp, err = client.Exec(Insert(spaceNo, []interface{}{uint(10), "test", "one"}))
+	result, err = client.Exec(Insert(spaceNo, []interface{}{uint(10), "test", "one"}))
 	fmt.Println("Insert Error", err)
-	fmt.Println("Insert Code", resp.Code)
-	fmt.Println("Insert Data", resp.Data)
+	fmt.Println("Insert Result", result)
 
 	// Insert new tuple { 11, 1 }.
-	resp, err = client.Exec(Insert("test", &Tuple{ID: 10, Msg: "test", Name: "one"}))
+	result, err = client.Exec(Insert("test", &Tuple{ID: 10, Msg: "test", Name: "one"}))
 	fmt.Println("Insert Error", err)
-	fmt.Println("Insert Code", resp.Code)
-	fmt.Println("Insert Data", resp.Data)
+	fmt.Println("Insert Result", result)
 
 	// Delete tuple with primary key { 10 }.
-	resp, err = client.Exec(Delete(spaceNo, indexNo, []interface{}{uint(10)}))
+	result, err = client.Exec(Delete(spaceNo, indexNo, []interface{}{uint(10)}))
 	// or
-	// resp, err = client.Exec(Delete("test", "primary", UintKey{10}}))
+	// result, err = client.Exec(Delete("test", "primary", UintKey{10}}))
 	fmt.Println("Delete Error", err)
-	fmt.Println("Delete Code", resp.Code)
-	fmt.Println("Delete Data", resp.Data)
+	fmt.Println("Delete Result", result)
 
 	// Replace tuple with primary key 13.
-	resp, err = client.Exec(Replace(spaceNo, []interface{}{uint(13), 1}))
+	result, err = client.Exec(Replace(spaceNo, []interface{}{uint(13), 1}))
 	fmt.Println("Replace Error", err)
-	fmt.Println("Replace Code", resp.Code)
-	fmt.Println("Replace Data", resp.Data)
+	fmt.Println("Replace Result", result)
 
 	// Update tuple with primary key { 13 }, incrementing second field by 3.
-	resp, err = client.Exec(Update("test", "primary", UintKey{13}, []Op{OpAdd(1, 3)}))
+	result, err = client.Exec(Update("test", "primary", UintKey{13}, []Op{OpAdd(1, 3)}))
 	// or
 	// resp, err = client.Exec(Update(spaceNo, indexNo, []interface{}{uint(13)}, []Op{OpAdd(1, 3)}))
 	fmt.Println("Update Error", err)
-	fmt.Println("Update Code", resp.Code)
-	fmt.Println("Update Data", resp.Data)
+	fmt.Println("Update Result", result)
 
 	// Select just one tuple with primary key { 15 }.
-	resp, err = client.Exec(Select(spaceNo, indexNo, 0, 1, IterEq, []interface{}{uint(15)}))
+	result, err = client.Exec(Select(spaceNo, indexNo, 0, 1, IterEq, []interface{}{uint(15)}))
 	// or
 	// resp, err = client.Exec(Select("test", "primary", 0, 1, IterEq, UintKey{15}))
 	fmt.Println("Select Error", err)
-	fmt.Println("Select Code", resp.Code)
-	fmt.Println("Select Data", resp.Data)
+	fmt.Println("Select Result", result)
 
 	// Call function 'func_name' with arguments.
-	resp, err = client.Exec(Call("simple_incr", []interface{}{1}))
+	result, err = client.Exec(Call("simple_incr", []interface{}{1}))
 	fmt.Println("Call Error", err)
-	fmt.Println("Call Code", resp.Code)
-	fmt.Println("Call Data", resp.Data)
+	fmt.Println("Call Result", result)
 
 	// Run raw lua code.
-	resp, err = client.Exec(Eval("return 1 + 2", []interface{}{}))
+	result, err = client.Exec(Eval("return 1 + 2", []interface{}{}))
 	fmt.Println("Eval Error", err)
-	fmt.Println("Eval Code", resp.Code)
-	fmt.Println("Eval Data", resp.Data)
+	fmt.Println("Eval Result", result)
 
 	// Output:
-	// Ping Code 0
-	// Ping Data []
-	// Ping Error <nil>
+	// Ping Result []
 	// Insert Error <nil>
-	// Insert Code 0
-	// Insert Data [[10 test one]]
+	// Insert Result [[10 test one]]
 	// Insert Error Duplicate key exists in unique index 'primary' in space 'test' (0x3)
-	// Insert Code 3
-	// Insert Data []
+	// Insert Result []
 	// Delete Error <nil>
-	// Delete Code 0
-	// Delete Data [[10 test one]]
+	// Delete Result [[10 test one]]
 	// Replace Error <nil>
-	// Replace Code 0
-	// Replace Data [[13 1]]
+	// Replace Result [[13 1]]
 	// Update Error <nil>
-	// Update Code 0
-	// Update Data [[13 4]]
+	// Update Result [[13 4]]
 	// Select Error <nil>
-	// Select Code 0
-	// Select Data [[15 val 15 bla]]
+	// Select Result [[15 val 15 bla]]
 	// Call Error <nil>
-	// Call Code 0
-	// Call Data [2]
+	// Call Result [2]
 	// Eval Error <nil>
-	// Eval Code 0
-	// Eval Data [3]
+	// Eval Result [3]
 }
