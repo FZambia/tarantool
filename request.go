@@ -31,7 +31,7 @@ func (req *Request) WithPushTyped(pushTypedCB func(func(interface{}) error)) *Re
 	return req
 }
 
-func (req *Request) pack(requestID uint32, h *smallWBuf, enc *msgpack.Encoder, body func(*msgpack.Encoder) error) (err error) {
+func (req *Request) pack(requestID uint32, h *smallWBuf, enc *msgpack.Encoder, conn *Connection) error {
 	hl := len(*h)
 	*h = append(*h, smallWBuf{
 		0xce, 0, 0, 0, 0, // length
@@ -42,8 +42,13 @@ func (req *Request) pack(requestID uint32, h *smallWBuf, enc *msgpack.Encoder, b
 		byte(requestID >> 8), byte(requestID),
 	}...)
 
+	body, err := req.sendFunc(conn)
+	if err != nil {
+		return err
+	}
+
 	if err = body(enc); err != nil {
-		return
+		return err
 	}
 
 	l := uint32(len(*h) - 5 - hl)
@@ -52,7 +57,7 @@ func (req *Request) pack(requestID uint32, h *smallWBuf, enc *msgpack.Encoder, b
 	(*h)[hl+3] = byte(l >> 8)
 	(*h)[hl+4] = byte(l)
 
-	return
+	return nil
 }
 
 // Ping sends empty request to Tarantool to check connection.

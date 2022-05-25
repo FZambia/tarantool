@@ -563,14 +563,17 @@ func (conn *Connection) dial() (err error) {
 func (conn *Connection) writeAuthRequest(w *bufio.Writer, scramble []byte) (err error) {
 	request := &Request{
 		requestCode: AuthRequest,
+		sendFunc: func(conn *Connection) (func(enc *msgpack.Encoder) error, error) {
+			return func(enc *msgpack.Encoder) error {
+				return enc.Encode(map[uint32]interface{}{
+					KeyUserName: conn.opts.User,
+					KeyTuple:    []interface{}{"chap-sha1", string(scramble)},
+				})
+			}, nil
+		},
 	}
 	var packet smallWBuf
-	err = request.pack(0, &packet, msgpack.NewEncoder(&packet), func(enc *msgpack.Encoder) error {
-		return enc.Encode(map[uint32]interface{}{
-			KeyUserName: conn.opts.User,
-			KeyTuple:    []interface{}{"chap-sha1", string(scramble)},
-		})
-	})
+	err = request.pack(0, &packet, msgpack.NewEncoder(&packet), conn)
 	if err != nil {
 		return errors.New("auth: pack error " + err.Error())
 	}
@@ -853,17 +856,11 @@ func (conn *Connection) newFuture(req *Request, withTimeout bool) (fut *futureIm
 			}
 		}
 	}
-	body, err := req.sendFunc(conn)
-	if err != nil {
-		fut.err = err
-		fut.ready = nil
-		return
-	}
-	conn.putFuture(fut, body)
+	conn.putFuture(fut)
 	return
 }
 
-func (conn *Connection) putFuture(fut *futureImpl, body func(*msgpack.Encoder) error) {
+func (conn *Connection) putFuture(fut *futureImpl) {
 	shardNum := fut.requestID & (conn.opts.Concurrency - 1)
 	shard := &conn.shard[shardNum]
 	shard.bufMu.Lock()
@@ -881,7 +878,7 @@ func (conn *Connection) putFuture(fut *futureImpl, body func(*msgpack.Encoder) e
 		shard.enc = enc
 	}
 	bufLen := len(shard.buf)
-	if err := fut.req.pack(fut.requestID, &shard.buf, shard.enc, body); err != nil {
+	if err := fut.req.pack(fut.requestID, &shard.buf, shard.enc, fut.conn); err != nil {
 		shard.buf = shard.buf[:bufLen]
 		shard.bufMu.Unlock()
 		if f := conn.fetchFuture(fut.requestID); f == fut {
