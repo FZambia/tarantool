@@ -1,3 +1,8 @@
+v0.3.1
+======
+
+* Fix `panic: close of nil channel` after closing connection after an error - [#10](https://github.com/FZambia/tarantool/issues/10)
+
 v0.3.0
 ======
 
