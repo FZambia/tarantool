@@ -1202,3 +1202,23 @@ func TestErrorDecode(t *testing.T) {
 	err = conn.ExecTyped(Eval("return 1, 3", []interface{}{}), &s)
 	require.Error(t, err)
 }
+
+// Tests regression from https://github.com/FZambia/tarantool/issues/10.
+func TestCloseAfterError(t *testing.T) {
+	opts := Opts{
+		RequestTimeout: 500 * time.Millisecond,
+		User:           "guest",
+	}
+	conn, err := Connect(server, opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	_, err = conn.ExecContext(ctx, Insert("non-existing-space", struct{ ID string }{"test"}))
+	require.Error(t, err)
+	err = conn.Close()
+	require.NoError(t, err)
+}
