@@ -99,6 +99,8 @@ type Logger interface {
 // In any method that accepts `space` you may pass either space number or
 // space name (in this case it will be looked up in schema). Same is true for `index`.
 //
+// A Connection can be used simultaneously from multiple goroutines.
+//
 // ATTENTION: `tuple`, `key`, `ops` and `args` arguments for any method should be
 // and array or should serialize to msgpack array.
 type Connection struct {
